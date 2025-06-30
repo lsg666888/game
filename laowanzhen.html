@@ -1,0 +1,5086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农场链游 - GGG Farm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 保持原有样式不变 */
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #8BC34A;
+            --accent-color: #FFC107;
+            --dark-color: #388E3C;
+            --light-color: #DCEDC8;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+        }
+        
+        /* 保持其他所有样式不变 */
+        /* ...原有所有CSS样式... */
+        
+        .connect-wallet-btn {
+            background-color: #f5841f;
+            border-color: #f5841f;
+            color: white;
+        }
+        
+        .connect-wallet-btn:hover {
+            background-color: #e2731b;
+            border-color: #e2731b;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-tractor me-2"></i>GGG农场链游
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#dashboard">我的农场</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#market">市场</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#rewards">奖励中心</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span id="walletAddress" class="text-white me-3 d-none"></span>
+                    <button class="btn btn-primary" id="depositBtn">
+                        <i class="fas fa-arrow-down me-2"></i>充值到虚拟钱包
+                    </button>
+                    <button id="connectWallet" class="btn connect-wallet-btn">
+                        <i class="fas fa-wallet me-2"></i>连接钱包
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="container my-5">
+        <!-- 钱包连接和代币余额 -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <h5><i class="fas fa-coins me-2"></i>GGG余额</h5>
+                                <div class="token-balance" id="gggBalance">0 GGG</div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h5><i class="fas fa-coins me-2"></i>FGG余额</h5>
+                                <div class="token-balance" id="fggBalance">0 FGG</div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h5><i class="fas fa-wallet me-2"></i>虚拟GGG</h5>
+                                <div class="token-balance" id="virtualGggBalance">0 GGG</div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h5><i class="fas fa-wallet me-2"></i>虚拟FGG</h5>
+                                <div class="token-balance" id="virtualFggBalance">0 FGG</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 仪表盘标签页 -->
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="farms-tab" data-bs-toggle="tab" data-bs-target="#farms" type="button">我的农场</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cows-tab" data-bs-toggle="tab" data-bs-target="#cows" type="button">我的奶牛</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions" type="button">农场操作</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="dashboardTabsContent">
+                    <!-- 农场标签页 -->
+                    <div class="tab-pane fade show active" id="farms" role="tabpanel">
+                        <h4 class="section-title"><i class="fas fa-tractor farm-icon"></i>我的农场</h4>
+                        <div class="row" id="farmList">
+                            <div class="col-md-12 text-center">
+                                <p>加载中...</p>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <button class="btn btn-primary" id="buyFarmBtn">
+                                    <i class="fas fa-shopping-cart me-2"></i>购买新农场 (60 GGG)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 奶牛标签页 -->
+                    <div class="tab-pane fade" id="cows" role="tabpanel">
+                        <h4 class="section-title"><i class="fas fa-cow cow-icon"></i>我的奶牛</h4>
+                        <div class="row" id="cowList">
+                            <div class="col-md-12 text-center">
+                                <p>加载中...</p>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <button class="btn btn-primary" id="buyRegularCowBtn">
+                                    <i class="fas fa-cow me-2"></i>购买普通奶牛 (60 GGG)
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-warning" id="buyGoldenCowBtn">
+                                    <i class="fas fa-crown me-2"></i>购买黄金奶牛 (120 GGG)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作标签页 -->
+                    <div class="tab-pane fade" id="actions" role="tabpanel">
+                        <h4 class="section-title"><i class="fas fa-tasks me-2"></i>农场操作</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-seedling me-2"></i>农场施肥</h5>
+                                        <p class="card-text">为农场施肥以收获FGG代币。每个农场每天需要施肥一次。</p>
+                                        <div class="mb-3">
+                                            <label for="fertilizeFarmId" class="form-label">选择农场ID</label>
+                                            <select class="form-select" id="fertilizeFarmId">
+                                                <!-- 动态加载 -->
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-primary" id="fertilizeBtn">
+                                            <i class="fas fa-hand-holding-water me-2"></i>施肥 (1 GGG)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>收获FGG</h5>
+                                        <p class="card-text">从已施肥的农场收获FGG代币。每个农场每天可收获24 FGG。</p>
+                                        <div class="mb-3">
+                                            <label for="harvestFarmId" class="form-label">选择农场ID</label>
+                                            <select class="form-select" id="harvestFarmId">
+                                                <!-- 动态加载 -->
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-primary" id="harvestBtn">
+                                            <i class="fas fa-hands-helping me-2"></i>收获FGG
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-cow me-2"></i>喂养奶牛</h5>
+                                        <p class="card-text">喂养奶牛以维持GGG代币的生产。</p>
+                                        <div class="mb-3">
+                                            <label for="feedCowId" class="form-label">选择奶牛ID</label>
+                                            <select class="form-select" id="feedCowId">
+                                                <!-- 动态加载 -->
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">喂养类型</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="feedType" id="feedRegular" value="regular" checked>
+                                                <label class="form-check-label" for="feedRegular">普通奶牛 (1 FGG/小时)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="feedType" id="feedGolden" value="golden">
+                                                <label class="form-check-label" for="feedGolden">黄金奶牛 (2 FGG/小时)</label>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary" id="feedCowBtn">
+                                            <i class="fas fa-utensils me-2"></i>喂养奶牛
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-random me-2"></i>合成奶牛</h5>
+                                        <p class="card-text">将两头普通奶牛合成为一头黄金奶牛 (70%成功率)。</p>
+                                        <div class="mb-3">
+                                            <label for="cowId1" class="form-label">第一头奶牛ID</label>
+                                            <select class="form-select" id="cowId1">
+                                                <!-- 动态加载 -->
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="cowId2" class="form-label">第二头奶牛ID</label>
+                                            <select class="form-select" id="cowId2">
+                                                <!-- 动态加载 -->
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-warning" id="mergeCowsBtn">
+                                            <i class="fas fa-random me-2"></i>合成奶牛
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 市场标签页 -->
+        <div class="row mt-5" id="market">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="section-title"><i class="fas fa-store me-2"></i>市场</h4>
+                        <ul class="nav nav-tabs" id="marketTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="buy-tab" data-bs-toggle="tab" data-bs-target="#buy" type="button">购买</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="sell-tab" data-bs-toggle="tab" data-bs-target="#sell" type="button">出售</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="my-orders-tab" data-bs-toggle="tab" data-bs-target="#my-orders" type="button">我的订单</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="marketTabsContent">
+                            <div class="tab-pane fade show active" id="buy" role="tabpanel">
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-tractor me-2"></i>农场</h5>
+                                        <div class="list-group" id="farmMarketList">
+                                            <div class="list-group-item text-center">
+                                                <p>加载中...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-cow me-2"></i>奶牛</h5>
+                                        <div class="list-group" id="cowMarketList">
+                                            <div class="list-group-item text-center">
+                                                <p>加载中...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="sell" role="tabpanel">
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title"><i class="fas fa-tractor me-2"></i>出售农场</h5>
+                                                <div class="mb-3">
+                                                    <label for="sellFarmId" class="form-label">选择农场ID</label>
+                                                    <select class="form-select" id="sellFarmId">
+                                                        <!-- 动态加载 -->
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="farmPrice" class="form-label">价格 (GGG)</label>
+                                                    <input type="number" class="form-control" id="farmPrice" min="1">
+                                                </div>
+                                                <button class="btn btn-primary" id="sellFarmBtn">
+                                                    <i class="fas fa-tag me-2"></i>上架农场
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title"><i class="fas fa-cow me-2"></i>出售奶牛</h5>
+                                                <div class="mb-3">
+                                                    <label for="sellCowId" class="form-label">选择奶牛ID</label>
+                                                    <select class="form-select" id="sellCowId">
+                                                        <!-- 动态加载 -->
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="cowPrice" class="form-label">价格 (GGG)</label>
+                                                    <input type="number" class="form-control" id="cowPrice" min="1">
+                                                </div>
+                                                <button class="btn btn-primary" id="sellCowBtn">
+                                                    <i class="fas fa-tag me-2"></i>上架奶牛
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="my-orders" role="tabpanel">
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <h5>我的出售订单</h5>
+                                        <div class="list-group" id="mySellOrders">
+                                            <div class="list-group-item text-center">
+                                                <p>加载中...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 奖励中心标签页 -->
+        <div class="row mt-5" id="rewards">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="section-title"><i class="fas fa-gift me-2"></i>奖励中心</h4>
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-user-plus feature-icon"></i>
+                                        <h5 class="card-title">注册奖励</h5>
+                                        <p class="card-text">新用户注册可获得10 GGG奖励</p>
+                                        <button class="btn btn-primary" id="registerBtn">
+                                            <i class="fas fa-user-plus me-2"></i>领取注册奖励
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-calendar-check feature-icon"></i>
+                                        <h5 class="card-title">每日签到</h5>
+                                        <p class="card-text">每日签到可获得1 GGG奖励</p>
+                                        <div class="mb-3">
+                                            <div class="progress">
+                                                <div id="signInProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            <small id="signInStatus">今日未签到</small>
+                                        </div>
+                                        <button class="btn btn-primary" id="signInBtn">
+                                            <i class="fas fa-calendar-check me-2"></i>每日签到
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-users feature-icon"></i>
+                                        <h5 class="card-title">邀请奖励</h5>
+                                        <p class="card-text">邀请好友可获得5 GGG/人奖励</p>
+                                        <div class="mb-3">
+                                            <p>已邀请: <span id="inviteCount">0</span> 人</p>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <input type="text" class="form-control" id="inviteCode" placeholder="输入邀请码" disabled>
+                                            <button class="btn btn-outline-secondary" type="button" id="copyInviteBtn">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <button class="btn btn-primary" id="inviteBtn">
+                                            <i class="fas fa-user-friends me-2"></i>生成邀请链接
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-wallet me-2"></i>提现</h5>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="withdrawAmount" class="form-label">提现金额</label>
+                                                <input type="number" class="form-control" id="withdrawAmount" min="1">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="withdrawToken" class="form-label">代币类型</label>
+                                                <select class="form-select" id="withdrawToken">
+                                                    <option value="GGG">GGG</option>
+                                                    <option value="FGG">FGG</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>提现将收取3-8%的随机手续费
+                                        </div>
+                                        <button class="btn btn-primary" id="withdrawBtn">
+                                            <i class="fas fa-hand-holding-usd me-2"></i>提现
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 交易确认模态框 -->
+    <div class="modal fade" id="transactionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transactionModalTitle">交易确认</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="transactionModalBody">
+                    <!-- 动态加载 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmTransactionBtn">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 交易状态模态框 -->
+    <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalTitle">交易状态</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="statusModalBody">
+                    <!-- 动态加载 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-tractor me-2"></i>GGG农场链游</h5>
+                    <p>一个基于区块链的农场模拟游戏，体验种植、养殖和交易的乐趣。</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>快速链接</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#dashboard" class="text-white">我的农场</a></li>
+                        <li><a href="#market" class="text-white">市场</a></li>
+                        <li><a href="#rewards" class="text-white">奖励中心</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>联系我们</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fab fa-twitter me-2"></i>Twitter</li>
+                        <li><i class="fab fa-discord me-2"></i>Discord</li>
+                        <li><i class="fab fa-telegram me-2"></i>Telegram</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12 text-center">
+                    <p class="mb-0">&copy; 2023 GGG农场链游. 保留所有权利.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    
+    <!-- 应用脚本 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化变量
+            let web3;
+            let accounts = [];
+            let contracts = {
+                gggToken: null,
+                fggToken: null,
+                farmNFT: null,
+                cowNFT: null,
+                market: null,
+                rewardSystem: null
+            };
+            
+            // 合约ABI和地址 (替换为实际值)
+            const contractConfig = {
+                gggToken: {
+                    address: '0x1cec3e2d128cbee9bec14d6f7bc73fc6f2810238',
+                    abi: [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "initialOwner",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "allowance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientAllowance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSpender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "CREATOR_SHARE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "MAX_SUPPLY",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "mint",
+		"outputs": [],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+] // 替换为实际ABI
+                },
+                fggToken: {
+                    address: '0x51c9276b01e218ead0a807ec2095f420c56be19e',
+                    abi: [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "initialOwner",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "allowance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientAllowance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSpender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "CREATOR_SHARE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "MAX_SUPPLY",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "mint",
+		"outputs": [],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+] // 替换为实际ABI
+                },
+                farmNFT: {
+                    address: '0x2fa0b87cb825bab8a21dce09da1d410805ee424a',
+                    abi: [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_gggTokenAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721IncorrectOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721InsufficientApproval",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOperator",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721NonexistentToken",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "approved",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "ApprovalForAll",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "CREATOR_SHARE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "FARM_PRICE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "TOTAL_SUPPLY",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "buyFarm",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "cowCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "farmCounter",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "farmId",
+				"type": "uint256"
+			}
+		],
+		"name": "fertilizeFarm",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getApproved",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "player",
+				"type": "address"
+			}
+		],
+		"name": "getMaxCowCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "player",
+				"type": "address"
+			}
+		],
+		"name": "getPlayerFarmCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gggToken",
+		"outputs": [
+			{
+				"internalType": "contract IERC20",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "isApprovedForAll",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "lastFertilizeTime",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ownerOf",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "farmId",
+				"type": "uint256"
+			}
+		],
+		"name": "produceFGG",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "remainingSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "setApprovalForAll",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes4",
+				"name": "interfaceId",
+				"type": "bytes4"
+			}
+		],
+		"name": "supportsInterface",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenURI",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			}
+		],
+		"name": "withdrawGGG",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+] // 替换为实际ABI
+                },
+                cowNFT: {
+                    address: '0xc605adde49b2276d00b4a4169469654818f235ed',
+                    abi: [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_fggTokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_gggTokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_farmNFTAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_initialOwner",
+				"type": "address"
+			},
+			{
+				"internalType": "string",
+				"name": "_baseURI",
+				"type": "string"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721IncorrectOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721InsufficientApproval",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOperator",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721NonexistentToken",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "approved",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "ApprovalForAll",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "player",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "cowId1",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "cowId2",
+				"type": "uint256"
+			}
+		],
+		"name": "CowMergeFailed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "player",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "cowId1",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "cowId2",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newCowId",
+				"type": "uint256"
+			}
+		],
+		"name": "CowMerged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "MetadataUpdate",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "baseURI",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "cowType_",
+				"type": "uint256"
+			}
+		],
+		"name": "buyCow",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "cowId",
+				"type": "uint256"
+			}
+		],
+		"name": "canProduce",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "canProduceFlag",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "cowCounter",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "cowPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "cowType",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "creatorShare",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "farmNFT",
+		"outputs": [
+			{
+				"internalType": "contract IFarmNFT",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "cowId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "feedCow",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fggTokenAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getApproved",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "cowId",
+				"type": "uint256"
+			}
+		],
+		"name": "getGGGReward",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gggTokenAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "goldenCowFeedAmount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "isApprovedForAll",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "lastFedTime",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "maxCowSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "cowId1",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "cowId2",
+				"type": "uint256"
+			}
+		],
+		"name": "mergeCows",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "mergeSuccessProbability",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "cowType_",
+				"type": "uint256"
+			}
+		],
+		"name": "mintCow",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ownerOf",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "regularCowFeedAmount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "setApprovalForAll",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "newBaseURI",
+				"type": "string"
+			}
+		],
+		"name": "setBaseURI",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes4",
+				"name": "interfaceId",
+				"type": "bytes4"
+			}
+		],
+		"name": "supportsInterface",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenURI",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "tokenAddress",
+				"type": "address"
+			}
+		],
+		"name": "withdrawTokens",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+] // 替换为实际ABI
+                },
+                market: {
+                    address: '0xe2969cc898d50ba7e82d0731161a63a6653027f7',
+                    abi: [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_gggTokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_fggTokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_farmNFTAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_cowNFTAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_initialOwner",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "orderId",
+				"type": "uint256"
+			}
+		],
+		"name": "OrderCancelled",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "orderId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"name": "OrderCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "orderId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			}
+		],
+		"name": "OrderExecuted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "orderId",
+				"type": "uint256"
+			}
+		],
+		"name": "cancelOrder",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "cowNFT",
+		"outputs": [
+			{
+				"internalType": "contract IERC721",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftContract",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"name": "createOrder",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "orderId",
+				"type": "uint256"
+			}
+		],
+		"name": "executeOrder",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "farmNFT",
+		"outputs": [
+			{
+				"internalType": "contract IERC721",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "feePercentage",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fggToken",
+		"outputs": [
+			{
+				"internalType": "contract IERC20",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "orderId",
+				"type": "uint256"
+			}
+		],
+		"name": "getOrder",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "seller",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "tokenId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "isActive",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct Market.Order",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gggToken",
+		"outputs": [
+			{
+				"internalType": "contract IERC20",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nextOrderId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "orders",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isActive",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "setFeePercentage",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+] // 替换为实际ABI
+                },
+                rewardSystem: {
+                    address: '0x05159d798b1fb5d110593d6b4726ac42b08b10a0',
+                    abi: [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_gggTokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_fggTokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "initialOwner",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "tokenType",
+				"type": "string"
+			}
+		],
+		"name": "DepositToVirtualWallet",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "invitee",
+				"type": "address"
+			}
+		],
+		"name": "Invited",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			}
+		],
+		"name": "Registered",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "rewardType",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "tokenType",
+				"type": "string"
+			}
+		],
+		"name": "RewardTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			}
+		],
+		"name": "SignedIn",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "dailySignInReward",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "tokenType",
+				"type": "string"
+			}
+		],
+		"name": "depositToVirtualWallet",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fggToken",
+		"outputs": [
+			{
+				"internalType": "contract IERC20",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gggToken",
+		"outputs": [
+			{
+				"internalType": "contract IERC20",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "invitee",
+				"type": "address"
+			}
+		],
+		"name": "invite",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "inviteCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "inviteReward",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "lastSignIn",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "register",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "registrationReward",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_newReward",
+				"type": "uint256"
+			}
+		],
+		"name": "setDailySignInReward",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_newReward",
+				"type": "uint256"
+			}
+		],
+		"name": "setInviteReward",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_newReward",
+				"type": "uint256"
+			}
+		],
+		"name": "setRegistrationReward",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "signIn",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "virtualWalletFGG",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "virtualWalletGGG",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "tokenType",
+				"type": "string"
+			}
+		],
+		"name": "withdrawReward",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+] // 替换为实际ABI
+                }
+            };
+            
+            // 连接钱包按钮点击事件
+            document.getElementById('connectWallet').addEventListener('click', async function() {
+                try {
+                    let provider;
+                    if (typeof window.conflux !== 'undefined') {
+                        // Conflux钱包处理
+                        provider = window.conflux;
+                        accounts = await provider.request({ method: 'cfx_requestAccounts' });
+                        web3 = new Web3(provider);
+                        
+                        // 检查网络
+                        const chainId = await provider.request({ method: 'cfx_chainId' });
+                        if (chainId !== '0x1') { // Conflux主网chainId
+                            showStatusModal('错误', '请切换到Conflux主网');
+                            return;
+                        }
+                    } else if (typeof window.ethereum !== 'undefined') {
+                        // MetaMask或其他以太坊钱包处理
+                        provider = window.ethereum;
+                        accounts = await provider.request({ method: 'eth_requestAccounts' });
+                        web3 = new Web3(provider);
+                        
+                        // 检查网络
+                        const chainId = await web3.eth.getChainId();
+                        if (chainId !== 1) { // 以太坊主网chainId
+                            showStatusModal('错误', '请切换到以太坊主网');
+                            return;
+                        }
+                    } else {
+                        showStatusModal('错误', '请安装ConfluxPortal或MetaMask钱包');
+                        return;
+                    }
+                    
+                    // 初始化合约实例
+                    contracts.gggToken = new web3.eth.Contract(contractConfig.gggToken.abi, contractConfig.gggToken.address);
+                    contracts.fggToken = new web3.eth.Contract(contractConfig.fggToken.abi, contractConfig.fggToken.address);
+                    contracts.farmNFT = new web3.eth.Contract(contractConfig.farmNFT.abi, contractConfig.farmNFT.address);
+                    contracts.cowNFT = new web3.eth.Contract(contractConfig.cowNFT.abi, contractConfig.cowNFT.address);
+                    contracts.market = new web3.eth.Contract(contractConfig.market.abi, contractConfig.market.address);
+                    contracts.rewardSystem = new web3.eth.Contract(contractConfig.rewardSystem.abi, contractConfig.rewardSystem.address);
+
+                    // 更新UI
+                    updateWalletInfo();
+                    loadUserData();
+
+                    // 监听账户变化
+                    provider.on('accountsChanged', (newAccounts) => {
+                        accounts = newAccounts;
+                        updateWalletInfo();
+                        loadUserData();
+                    });
+                    
+                } catch (error) {
+                    console.error("连接钱包失败:", error);
+                    showStatusModal('错误', '连接钱包失败: ' + error.message);
+                }
+            });
+
+            // 更新钱包信息
+            function updateWalletInfo() {
+                if (accounts.length > 0) {
+                    const shortAddress = accounts[0].substring(0, 6) + '...' + accounts[0].substring(38);
+                    document.getElementById('walletAddress').textContent = shortAddress;
+                    document.getElementById('walletAddress').classList.remove('d-none');
+                    document.getElementById('connectWallet').textContent = '已连接';
+                    document.getElementById('connectWallet').classList.remove('connect-wallet-btn');
+                    document.getElementById('connectWallet').classList.add('btn-success');
+                }
+            }
+            
+            // 加载用户数据
+            async function loadUserData() {
+                if (accounts.length > 0) {
+                    try {
+                        // 获取真实钱包余额
+                        const gggBalance = await contracts.gggToken.methods.balanceOf(accounts[0]).call();
+                        const fggBalance = await contracts.fggToken.methods.balanceOf(accounts[0]).call();
+                        
+                        // 获取虚拟钱包余额
+                        const virtualGggBalance = await contracts.rewardSystem.methods.virtualWalletGGG(accounts[0]).call();
+                        const virtualFggBalance = await contracts.rewardSystem.methods.virtualWalletFGG(accounts[0]).call();
+                        
+                        // 更新UI显示
+                        document.getElementById('gggBalance').textContent = web3.utils.fromWei(gggBalance, 'ether') + ' GGG';
+                        document.getElementById('fggBalance').textContent = web3.utils.fromWei(fggBalance, 'ether') + ' FGG';
+                        document.getElementById('virtualGggBalance').textContent = web3.utils.fromWei(virtualGggBalance, 'ether') + ' GGG';
+                        document.getElementById('virtualFggBalance').textContent = web3.utils.fromWei(virtualFggBalance, 'ether') + ' FGG';
+                        
+                        // 获取用户农场和奶牛
+                        await loadUserFarms();
+                        await loadUserCows();
+                        
+                        // 获取奖励中心数据
+                        await loadRewardData();
+                        
+                    } catch (error) {
+                        console.error("加载用户数据失败:", error);
+                    }
+                }
+            }
+            
+            // 加载用户农场
+            async function loadUserFarms() {
+                try {
+                    const farmCount = await contracts.farmNFT.methods.balanceOf(accounts[0]).call();
+                    const farmListElement = document.getElementById('farmList');
+                    farmListElement.innerHTML = '';
+                    
+                    if (farmCount > 0) {
+                        for (let i = 0; i < farmCount; i++) {
+                            const farmId = await contracts.farmNFT.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                            
+                            // 创建农场卡片
+                            const farmCard = document.createElement('div');
+                            farmCard.className = 'col-md-4 mb-4';
+                            farmCard.innerHTML = `
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-tractor me-2"></i>农场 #${farmId}</h5>
+                                        <p class="card-text">奶牛数量: 0/10</p>
+                                        <div class="d-flex justify-content-between">
+                                            <button class="btn btn-sm btn-outline-primary view-farm-btn" data-farm-id="${farmId}">查看详情</button>
+                                            <button class="btn btn-sm btn-outline-secondary sell-farm-btn" data-farm-id="${farmId}">出售</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            farmListElement.appendChild(farmCard);
+                        }
+                    } else {
+                        farmListElement.innerHTML = '<div class="col-md-12 text-center"><p>您还没有农场，点击下方按钮购买第一个农场</p></div>';
+                    }
+                    
+                    // 更新农场选择下拉框
+                    updateFarmSelects();
+                } catch (error) {
+                    console.error("加载农场失败:", error);
+                }
+            }
+            
+            // 加载用户奶牛
+            async function loadUserCows() {
+                try {
+                    const cowCount = await contracts.cowNFT.methods.balanceOf(accounts[0]).call();
+                    const cowListElement = document.getElementById('cowList');
+                    cowListElement.innerHTML = '';
+                    
+                    if (cowCount > 0) {
+                        for (let i = 0; i < cowCount; i++) {
+                            const cowId = await contracts.cowNFT.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                            const cowType = await contracts.cowNFT.methods.cowType(cowId).call();
+                            const typeName = cowType == 1 ? '普通奶牛' : '黄金奶牛';
+                            const typeClass = cowType == 1 ? 'text-primary' : 'text-warning';
+                            
+                            // 创建奶牛卡片
+                            const cowCard = document.createElement('div');
+                            cowCard.className = 'col-md-4 mb-4';
+                            cowCard.innerHTML = `
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-cow me-2 ${typeClass}"></i>${typeName} #${cowId}</h5>
+                                        <p class="card-text">状态: 正常</p>
+                                        <div class="d-flex justify-content-between">
+                                            <button class="btn btn-sm btn-outline-primary view-cow-btn" data-cow-id="${cowId}">查看详情</button>
+                                            <button class="btn btn-sm btn-outline-secondary sell-cow-btn" data-cow-id="${cowId}">出售</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            cowListElement.appendChild(cowCard);
+                        }
+                    } else {
+                        cowListElement.innerHTML = '<div class="col-md-12 text-center"><p>您还没有奶牛，点击下方按钮购买第一头奶牛</p></div>';
+                    }
+                    
+                    // 更新奶牛选择下拉框
+                    updateCowSelects();
+                } catch (error) {
+                    console.error("加载奶牛失败:", error);
+                }
+            }
+            
+            // 更新农场选择下拉框
+            function updateFarmSelects() {
+                const farmSelects = ['fertilizeFarmId', 'harvestFarmId', 'sellFarmId'];
+                
+                farmSelects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    select.innerHTML = '';
+                    
+                    // 获取用户拥有的农场
+                    contracts.farmNFT.methods.balanceOf(accounts[0]).call()
+                        .then(farmCount => {
+                            if (farmCount > 0) {
+                                for (let i = 0; i < farmCount; i++) {
+                                    contracts.farmNFT.methods.tokenOfOwnerByIndex(accounts[0], i).call()
+                                        .then(farmId => {
+                                            const option = document.createElement('option');
+                                            option.value = farmId;
+                                            option.textContent = `农场 #${farmId}`;
+                                            select.appendChild(option);
+                                        });
+                                }
+                            } else {
+                                const option = document.createElement('option');
+                                option.value = '';
+                                option.textContent = '没有可用农场';
+                                select.appendChild(option);
+                            }
+                        });
+                });
+            }
+            
+            // 更新奶牛选择下拉框
+            function updateCowSelects() {
+                const cowSelects = ['feedCowId', 'sellCowId', 'cowId1', 'cowId2'];
+                
+                cowSelects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    select.innerHTML = '';
+                    
+                    // 获取用户拥有的奶牛
+                    contracts.cowNFT.methods.balanceOf(accounts[0]).call()
+                        .then(cowCount => {
+                            if (cowCount > 0) {
+                                for (let i = 0; i < cowCount; i++) {
+                                    contracts.cowNFT.methods.tokenOfOwnerByIndex(accounts[0], i).call()
+                                        .then(cowId => {
+                                            const option = document.createElement('option');
+                                            option.value = cowId;
+                                            option.textContent = `奶牛 #${cowId}`;
+                                            select.appendChild(option);
+                                        });
+                                }
+                            } else {
+                                const option = document.createElement('option');
+                                option.value = '';
+                                option.textContent = '没有可用奶牛';
+                                select.appendChild(option);
+                            }
+                        });
+                });
+            }
+            
+            // 加载奖励中心数据
+            async function loadRewardData() {
+                try {
+                    // 检查是否已领取注册奖励
+                    const hasRegistered = await contracts.rewardSystem.methods.virtualWalletGGG(accounts[0]).call() > 0;
+                    document.getElementById('registerBtn').disabled = hasRegistered;
+                    
+                    // 检查今日是否已签到
+                    const lastSignIn = await contracts.rewardSystem.methods.lastSignIn(accounts[0]).call();
+                    const today = Math.floor(Date.now() / 86400000);
+                    const lastSignInDay = Math.floor(lastSignIn / 86400);
+                    const hasSignedIn = today === lastSignInDay;
+                    
+                    document.getElementById('signInBtn').disabled = hasSignedIn;
+                    document.getElementById('signInStatus').textContent = hasSignedIn ? '今日已签到' : '今日未签到';
+                    document.getElementById('signInProgress').style.width = hasSignedIn ? '100%' : '0%';
+                    
+                    // 获取邀请数据
+                    const inviteCount = await contracts.rewardSystem.methods.inviteCount(accounts[0]).call();
+                    document.getElementById('inviteCount').textContent = inviteCount;
+                    
+                    // 生成邀请码
+                    const inviteCode = accounts[0].substring(2, 8).toUpperCase();
+                    document.getElementById('inviteCode').value = inviteCode || '未生成';
+                } catch (error) {
+                    console.error("加载奖励数据失败:", error);
+                }
+            }
+            
+            // 显示交易确认模态框
+            function showTransactionModal(title, content, callback) {
+                document.getElementById('transactionModalTitle').textContent = title;
+                document.getElementById('transactionModalBody').innerHTML = content;
+                
+                const modal = new bootstrap.Modal(document.getElementById('transactionModal'));
+                modal.show();
+                
+                document.getElementById('confirmTransactionBtn').onclick = function() {
+                    modal.hide();
+                    if (callback) callback();
+                };
+            }
+            
+            // 显示状态模态框
+            function showStatusModal(title, content) {
+                document.getElementById('statusModalTitle').textContent = title;
+                document.getElementById('statusModalBody').innerHTML = content;
+                
+                const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+                modal.show();
+            }
+            
+            // 购买农场按钮点击事件
+            document.getElementById('buyFarmBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '购买农场',
+                    `<p>确定要花费 <strong>60 GGG</strong> 购买一个新农场吗?</p>
+                     <p class="text-info">将从您的真实钱包扣除</p>`,
+                    async function() {
+                        try {
+                            const price = web3.utils.toWei('60', 'ether');
+                            
+                            // 检查真实GGG余额
+                            const balance = await contracts.gggToken.methods.balanceOf(accounts[0]).call();
+                            if (BigInt(balance) < BigInt(price)) {
+                                showStatusModal('错误', 'GGG余额不足');
+                                return;
+                            }
+                            
+                            // 批准GGG代币
+                            await contracts.gggToken.methods.approve(contracts.farmNFT._address, price)
+                                .send({ from: accounts[0] });
+                            
+                            // 购买农场
+                            const tx = await contracts.farmNFT.methods.buyFarm()
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', '农场购买成功!');
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("购买农场失败:", error);
+                            showStatusModal('错误', '购买农场失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 购买普通奶牛按钮点击事件
+            document.getElementById('buyRegularCowBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '购买普通奶牛',
+                    `<p>确定要花费 <strong>60 GGG</strong> 购买一头普通奶牛吗?</p>`,
+                    async function() {
+                        try {
+                            const price = web3.utils.toWei('60', 'ether');
+                            
+                            // 检查GGG余额
+                            const balance = await contracts.gggToken.methods.balanceOf(accounts[0]).call();
+                            if (BigInt(balance) < BigInt(price)) {
+                                showStatusModal('错误', 'GGG余额不足');
+                                return;
+                            }
+                            
+                            // 批准GGG代币
+                            await contracts.gggToken.methods.approve(contracts.cowNFT._address, price)
+                                .send({ from: accounts[0] });
+                            
+                            // 购买奶牛
+                            const tx = await contracts.cowNFT.methods.buyCow(1)
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', '普通奶牛购买成功!');
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("购买奶牛失败:", error);
+                            showStatusModal('错误', '购买奶牛失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 购买黄金奶牛按钮点击事件
+            document.getElementById('buyGoldenCowBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '购买黄金奶牛',
+                    `<p>确定要花费 <strong>120 GGG</strong> 购买一头黄金奶牛吗?</p>`,
+                    async function() {
+                        try {
+                            const price = web3.utils.toWei('120', 'ether');
+                            
+                            // 检查GGG余额
+                            const balance = await contracts.gggToken.methods.balanceOf(accounts[0]).call();
+                            if (BigInt(balance) < BigInt(price)) {
+                                showStatusModal('错误', 'GGG余额不足');
+                                return;
+                            }
+                            
+                            // 批准GGG代币
+                            await contracts.gggToken.methods.approve(contracts.cowNFT._address, price)
+                                .send({ from: accounts[0] });
+                            
+                            // 购买奶牛
+                            const tx = await contracts.cowNFT.methods.buyCow(2)
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', '黄金奶牛购买成功!');
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("购买奶牛失败:", error);
+                            showStatusModal('错误', '购买奶牛失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 施肥按钮点击事件
+            document.getElementById('fertilizeBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                const farmId = document.getElementById('fertilizeFarmId').value;
+                if (!farmId) {
+                    showStatusModal('错误', '请选择农场');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '农场施肥',
+                    `<p>确定要花费 <strong>1 GGG</strong> 为农场 #${farmId} 施肥吗?</p>
+                     <p class="text-info">将从您的虚拟钱包扣除</p>`,
+                    async function() {
+                        try {
+                            const price = web3.utils.toWei('1', 'ether');
+                            
+                            // 检查虚拟GGG余额
+                            const balance = await contracts.rewardSystem.methods.virtualWalletGGG(accounts[0]).call();
+                            if (BigInt(balance) < BigInt(price)) {
+                                showStatusModal('错误', '虚拟GGG余额不足');
+                                return;
+                            }
+                            
+                            // 施肥 - 直接从虚拟钱包扣除
+                            await contracts.rewardSystem.methods.depositToVirtualWallet(price, "GGG")
+                                .send({ from: accounts[0] });
+                            
+                            const tx = await contracts.farmNFT.methods.fertilizeFarm(farmId)
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', `农场 #${farmId} 施肥成功!`);
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("施肥失败:", error);
+                            showStatusModal('错误', '施肥失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 收获FGG按钮点击事件
+            document.getElementById('harvestBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                const farmId = document.getElementById('harvestFarmId').value;
+                if (!farmId) {
+                    showStatusModal('错误', '请选择农场');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '收获FGG',
+                    `<p>确定要从农场 #${farmId} 收获FGG代币吗?</p>`,
+                    async function() {
+                        try {
+                            // 收获FGG
+                            const tx = await contracts.farmNFT.methods.produceFGG(farmId)
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', `从农场 #${farmId} 成功收获 FGG!`);
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("收获失败:", error);
+                            showStatusModal('错误', '收获失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 喂养奶牛按钮点击事件
+            document.getElementById('feedCowBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                const cowId = document.getElementById('feedCowId').value;
+                if (!cowId) {
+                    showStatusModal('错误', '请选择奶牛');
+                    return;
+                }
+                
+                const feedType = document.querySelector('input[name="feedType"]:checked').value;
+                const fggAmount = feedType === 'regular' ? '1' : '2';
+                
+                showTransactionModal(
+                    '喂养奶牛',
+                    `<p>确定要花费 <strong>${fggAmount} FGG</strong> 喂养奶牛 #${cowId} 吗?</p>`,
+                    async function() {
+                        try {
+                            const amount = web3.utils.toWei(fggAmount, 'ether');
+                            
+                            // 检查FGG余额
+                            const balance = await contracts.fggToken.methods.balanceOf(accounts[0]).call();
+                            if (BigInt(balance) < BigInt(amount)) {
+                                showStatusModal('错误', 'FGG余额不足');
+                                return;
+                            }
+                            
+                            // 批准FGG代币
+                            await contracts.fggToken.methods.approve(contracts.cowNFT._address, amount)
+                                .send({ from: accounts[0] });
+                            
+                            // 喂养奶牛
+                            const tx = await contracts.cowNFT.methods.feedCow(cowId, amount)
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', `奶牛 #${cowId} 喂养成功!`);
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("喂养失败:", error);
+                            showStatusModal('错误', '喂养失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 合成奶牛按钮点击事件
+            document.getElementById('mergeCowsBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                const cowId1 = document.getElementById('cowId1').value;
+                const cowId2 = document.getElementById('cowId2').value;
+                
+                if (!cowId1 || !cowId2) {
+                    showStatusModal('错误', '请选择两头奶牛');
+                    return;
+                }
+                
+                if (cowId1 === cowId2) {
+                    showStatusModal('错误', '不能选择同一头奶牛');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '合成奶牛',
+                    `<p>确定要将奶牛 #${cowId1} 和奶牛 #${cowId2} 合成为一头黄金奶牛吗?</p>
+                     <p class="text-warning">成功率: 70%</p>`,
+                    async function() {
+                        try {
+                            // 合成奶牛
+                            const tx = await contracts.cowNFT.methods.mergeCows(cowId1, cowId2)
+                                .send({ from: accounts[0] });
+                            
+                            // 检查是否成功
+                            if (tx.events.CowMerged) {
+                                showStatusModal('成功', '奶牛合成成功! 获得一头黄金奶牛!');
+                            } else {
+                                showStatusModal('失败', '奶牛合成失败，两头奶牛已销毁');
+                            }
+                            
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("合成失败:", error);
+                            showStatusModal('错误', '合成失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 注册奖励按钮点击事件
+            document.getElementById('registerBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '领取注册奖励',
+                    `<p>确定要领取 <strong>10 GGG</strong> 注册奖励吗?</p>`,
+                    async function() {
+                        try {
+                            // 领取注册奖励
+                            const tx = await contracts.rewardSystem.methods.register()
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', '注册奖励领取成功!');
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("领取注册奖励失败:", error);
+                            showStatusModal('错误', '领取注册奖励失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 每日签到按钮点击事件
+            document.getElementById('signInBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '每日签到',
+                    `<p>确定要签到领取 <strong>1 GGG</strong> 奖励吗?</p>`,
+                    async function() {
+                        try {
+                            // 每日签到
+                            const tx = await contracts.rewardSystem.methods.signIn()
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', '签到成功! 获得1 GGG奖励');
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("签到失败:", error);
+                            showStatusModal('错误', '签到失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 生成邀请链接按钮点击事件
+            document.getElementById('inviteBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                const inviteCode = accounts[0].substring(2, 8).toUpperCase();
+                const inviteLink = `${window.location.origin}?ref=${inviteCode}`;
+                
+                showStatusModal(
+                    '邀请链接',
+                    `<p>您的邀请码: <strong>${inviteCode}</strong></p>
+                     <p>邀请链接: <a href="${inviteLink}" target="_blank">${inviteLink}</a></p>
+                     <p>每成功邀请一位好友可获得 <strong>5 GGG</strong> 奖励</p>`,
+                    null
+                );
+            });
+            
+            // 复制邀请码按钮点击事件
+            document.getElementById('copyInviteBtn').addEventListener('click', function() {
+                const inviteCode = document.getElementById('inviteCode');
+                inviteCode.select();
+                document.execCommand('copy');
+                
+                const tooltip = new bootstrap.Tooltip(inviteCode, {
+                    title: '已复制!',
+                    trigger: 'manual'
+                });
+                
+                tooltip.show();
+                setTimeout(() => tooltip.hide(), 1000);
+            });
+            
+            // 充值功能实现
+            document.getElementById('depositBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '充值到虚拟钱包',
+                    `<div class="mb-3">
+                        <label for="depositAmount" class="form-label">充值金额</label>
+                        <input type="number" class="form-control" id="depositAmount" min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="depositToken" class="form-label">代币类型</label>
+                        <select class="form-select" id="depositToken">
+                            <option value="GGG">GGG</option>
+                            <option value="FGG">FGG</option>
+                        </select>
+                    </div>`,
+                    async function() {
+                        try {
+                            const amount = document.getElementById('depositAmount').value;
+                            const token = document.getElementById('depositToken').value;
+                            
+                            if (!amount || parseFloat(amount) <= 0) {
+                                showStatusModal('错误', '请输入有效的充值金额');
+                                return;
+                            }
+                            
+                            const amountInWei = web3.utils.toWei(amount, 'ether');
+                            
+                            if (token === 'GGG') {
+                                // 检查GGG余额
+                                const balance = await contracts.gggToken.methods.balanceOf(accounts[0]).call();
+                                if (BigInt(balance) < BigInt(amountInWei)) {
+                                    showStatusModal('错误', 'GGG余额不足');
+                                    return;
+                                }
+                                
+                                // 批准GGG代币
+                                await contracts.gggToken.methods.approve(contracts.rewardSystem._address, amountInWei)
+                                    .send({ from: accounts[0] });
+                                
+                                // 充值到虚拟钱包
+                                await contracts.rewardSystem.methods.depositToVirtualWallet(amountInWei, "GGG")
+                                    .send({ from: accounts[0] });
+                                
+                            } else {
+                                // 检查FGG余额
+                                const balance = await contracts.fggToken.methods.balanceOf(accounts[0]).call();
+                                if (BigInt(balance) < BigInt(amountInWei)) {
+                                    showStatusModal('错误', 'FGG余额不足');
+                                    return;
+                                }
+                                
+                                // 批准FGG代币
+                                await contracts.fggToken.methods.approve(contracts.rewardSystem._address, amountInWei)
+                                    .send({ from: accounts[0] });
+                                
+                                // 充值到虚拟钱包
+                                await contracts.rewardSystem.methods.depositToVirtualWallet(amountInWei, "FGG")
+                                    .send({ from: accounts[0] });
+                            }
+                            
+                            showStatusModal('成功', `成功充值 ${amount} ${token} 到虚拟钱包!`);
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("充值失败:", error);
+                            showStatusModal('错误', '充值失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 提现按钮点击事件
+            document.getElementById('withdrawBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                const amount = document.getElementById('withdrawAmount').value;
+                const token = document.getElementById('withdrawToken').value;
+                
+                if (!amount || parseFloat(amount) <= 0) {
+                    showStatusModal('错误', '请输入有效的提现金额');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '提现确认',
+                    `<p>确定要提现 <strong>${amount} ${token}</strong> 吗?</p>
+                     <p class="text-warning">注意: 提现将收取3-8%的随机手续费</p>`,
+                    async function() {
+                        try {
+                            const amountInWei = web3.utils.toWei(amount, 'ether');
+                            
+                            // 提现
+                            const tx = await contracts.rewardSystem.methods.withdrawReward(amountInWei, token)
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', `成功提现 ${amount} ${token}!`);
+                            loadUserData();
+                            
+                        } catch (error) {
+                            console.error("提现失败:", error);
+                            showStatusModal('错误', '提现失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 上架农场按钮点击事件
+            document.getElementById('sellFarmBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                const farmId = document.getElementById('sellFarmId').value;
+                const price = document.getElementById('farmPrice').value;
+                
+                if (!farmId) {
+                    showStatusModal('错误', '请选择农场');
+                    return;
+                }
+                
+                if (!price || parseFloat(price) <= 0) {
+                    showStatusModal('错误', '请输入有效的价格');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '上架农场',
+                    `<p>确定要将农场 #${farmId} 以 <strong>${price} GGG</strong> 的价格上架出售吗?</p>`,
+                    async function() {
+                        try {
+                            const priceInWei = web3.utils.toWei(price, 'ether');
+                            
+                            // 批准农场NFT
+                            await contracts.farmNFT.methods.approve(contracts.market._address, farmId)
+                                .send({ from: accounts[0] });
+                            
+                            // 上架农场
+                            const tx = await contracts.market.methods.createOrder(contracts.farmNFT._address, farmId, priceInWei)
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', `农场 #${farmId} 已上架出售!`);
+                            loadMarketData();
+                            
+                        } catch (error) {
+                            console.error("上架农场失败:", error);
+                            showStatusModal('错误', '上架农场失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 上架奶牛按钮点击事件
+            document.getElementById('sellCowBtn').addEventListener('click', function() {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                const cowId = document.getElementById('sellCowId').value;
+                const price = document.getElementById('cowPrice').value;
+                
+                if (!cowId) {
+                    showStatusModal('错误', '请选择奶牛');
+                    return;
+                }
+                
+                if (!price || parseFloat(price) <= 0) {
+                    showStatusModal('错误', '请输入有效的价格');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '上架奶牛',
+                    `<p>确定要将奶牛 #${cowId} 以 <strong>${price} GGG</strong> 的价格上架出售吗?</p>`,
+                    async function() {
+                        try {
+                            const priceInWei = web3.utils.toWei(price, 'ether');
+                            
+                            // 批准奶牛NFT
+                            await contracts.cowNFT.methods.approve(contracts.market._address, cowId)
+                                .send({ from: accounts[0] });
+                            
+                            // 上架奶牛
+                            const tx = await contracts.market.methods.createOrder(contracts.cowNFT._address, cowId, priceInWei)
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', `奶牛 #${cowId} 已上架出售!`);
+                            loadMarketData();
+                            
+                        } catch (error) {
+                            console.error("上架奶牛失败:", error);
+                            showStatusModal('错误', '上架奶牛失败: ' + error.message);
+                        }
+                    }
+                );
+            });
+            
+            // 加载市场数据
+            async function loadMarketData() {
+                if (!accounts.length) return;
+                
+                try {
+                    // 加载农场市场
+                    const farmOrders = await contracts.market.methods.getOrdersByNFT(contracts.farmNFT._address).call();
+                    const farmMarketList = document.getElementById('farmMarketList');
+                    farmMarketList.innerHTML = '';
+                    
+                    if (farmOrders.length > 0) {
+                        farmOrders.forEach(order => {
+                            if (order.isActive) {
+                                const orderItem = document.createElement('div');
+                                orderItem.className = 'list-group-item';
+                                orderItem.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>农场 #${order.tokenId}</h6>
+                                            <small>卖家: ${order.seller.substring(0, 6)}...${order.seller.substring(38)}</small>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-primary rounded-pill">${web3.utils.fromWei(order.price, 'ether')} GGG</span>
+                                            <button class="btn btn-sm btn-success ms-2 buy-farm-btn" data-order-id="${order.id}">购买</button>
+                                        </div>
+                                    </div>
+                                `;
+                                farmMarketList.appendChild(orderItem);
+                            }
+                        });
+                    } else {
+                        farmMarketList.innerHTML = '<div class="list-group-item text-center"><p>市场中没有农场出售</p></div>';
+                    }
+                    
+                    // 加载奶牛市场
+                    const cowOrders = await contracts.market.methods.getOrdersByNFT(contracts.cowNFT._address).call();
+                    const cowMarketList = document.getElementById('cowMarketList');
+                    cowMarketList.innerHTML = '';
+                    
+                    if (cowOrders.length > 0) {
+                        cowOrders.forEach(order => {
+                            if (order.isActive) {
+                                const orderItem = document.createElement('div');
+                                orderItem.className = 'list-group-item';
+                                orderItem.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>奶牛 #${order.tokenId}</h6>
+                                            <small>卖家: ${order.seller.substring(0, 6)}...${order.seller.substring(38)}</small>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-primary rounded-pill">${web3.utils.fromWei(order.price, 'ether')} GGG</span>
+                                            <button class="btn btn-sm btn-success ms-2 buy-cow-btn" data-order-id="${order.id}">购买</button>
+                                        </div>
+                                    </div>
+                                `;
+                                cowMarketList.appendChild(orderItem);
+                            }
+                        });
+                    } else {
+                        cowMarketList.innerHTML = '<div class="list-group-item text-center"><p>市场中没有奶牛出售</p></div>';
+                    }
+                    
+                    // 加载我的出售订单
+                    const mySellOrders = await contracts.market.methods.getOrdersBySeller(accounts[0]).call();
+                    const mySellOrdersList = document.getElementById('mySellOrders');
+                    mySellOrdersList.innerHTML = '';
+                    
+                    if (mySellOrders.length > 0) {
+                        mySellOrders.forEach(order => {
+                            const orderItem = document.createElement('div');
+                            orderItem.className = 'list-group-item';
+                            
+                            orderItem.innerHTML = `
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6>${order.nftContract === contracts.farmNFT._address ? '农场' : '奶牛'} #${order.tokenId}</h6>
+                                        <small>状态: ${order.isActive ? '出售中' : '已取消'}</small>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-primary rounded-pill">${web3.utils.fromWei(order.price, 'ether')} GGG</span>
+                                        ${order.isActive ? `<button class="btn btn-sm btn-danger ms-2 cancel-order-btn" data-order-id="${order.id}">取消</button>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            mySellOrdersList.appendChild(orderItem);
+                        });
+                    } else {
+                        mySellOrdersList.innerHTML = '<div class="list-group-item text-center"><p>您没有出售中的订单</p></div>';
+                    }
+                    
+                } catch (error) {
+                    console.error("加载市场数据失败:", error);
+                }
+            }
+            
+            // 市场购买按钮事件委托
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('buy-farm-btn')) {
+                    const orderId = e.target.getAttribute('data-order-id');
+                    buyOrder(orderId);
+                }
+                
+                if (e.target.classList.contains('buy-cow-btn')) {
+                    const orderId = e.target.getAttribute('data-order-id');
+                    buyOrder(orderId);
+                }
+                
+                if (e.target.classList.contains('cancel-order-btn')) {
+                    const orderId = e.target.getAttribute('data-order-id');
+                    cancelOrder(orderId);
+                }
+            });
+            
+            // 购买订单
+            async function buyOrder(orderId) {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                try {
+                    // 获取订单详情
+                    const order = await contracts.market.methods.getOrder(orderId).call();
+                    
+                    showTransactionModal(
+                        '购买确认',
+                        `<p>确定要花费 <strong>${web3.utils.fromWei(order.price, 'ether')} GGG</strong> 购买${order.nftContract === contracts.farmNFT._address ? '农场' : '奶牛'} #${order.tokenId} 吗?</p>
+                         <p>卖家: ${order.seller.substring(0, 6)}...${order.seller.substring(38)}</p>`,
+                        async function() {
+                            try {
+                                // 检查GGG余额
+                                const balance = await contracts.gggToken.methods.balanceOf(accounts[0]).call();
+                                if (BigInt(balance) < BigInt(order.price)) {
+                                    showStatusModal('错误', 'GGG余额不足');
+                                    return;
+                                }
+                                
+                                // 批准GGG代币
+                                await contracts.gggToken.methods.approve(contracts.market._address, order.price)
+                                    .send({ from: accounts[0] });
+                                
+                                // 执行订单
+                                const tx = await contracts.market.methods.executeOrder(orderId)
+                                    .send({ from: accounts[0] });
+                                
+                                showStatusModal('成功', `购买成功!`);
+                                loadUserData();
+                                loadMarketData();
+                                
+                            } catch (error) {
+                                console.error("购买失败:", error);
+                                showStatusModal('错误', '购买失败: ' + error.message);
+                            }
+                        }
+                    );
+                    
+                } catch (error) {
+                    console.error("获取订单详情失败:", error);
+                    showStatusModal('错误', '获取订单详情失败: ' + error.message);
+                }
+            }
+            
+            // 取消订单
+            async function cancelOrder(orderId) {
+                if (!accounts.length) {
+                    showStatusModal('错误', '请先连接钱包');
+                    return;
+                }
+                
+                showTransactionModal(
+                    '取消订单',
+                    `<p>确定要取消这个出售订单吗?</p>`,
+                    async function() {
+                        try {
+                            // 取消订单
+                            const tx = await contracts.market.methods.cancelOrder(orderId)
+                                .send({ from: accounts[0] });
+                            
+                            showStatusModal('成功', '订单取消成功!');
+                            loadUserData();
+                            loadMarketData();
+                            
+                        } catch (error) {
+                            console.error("取消订单失败:", error);
+                            showStatusModal('错误', '取消订单失败: ' + error.message);
+                        }
+                    }
+                );
+            }
+            
+            // 初始化市场标签页点击事件
+            document.querySelectorAll('#marketTabs .nav-link').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    if (this.id === 'buy-tab' || this.id === 'my-orders-tab') {
+                        loadMarketData();
+                    }
+                });
+            });
+            
+            // 检查是否通过邀请链接访问
+            function checkInviteCode() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const inviteCode = urlParams.get('ref');
+                
+                if (inviteCode && accounts.length > 0) {
+                    // 使用邀请码注册
+                    contracts.rewardSystem.methods.invite(accounts[0])
+                        .send({ from: accounts[0] })
+                        .then(() => {
+                            showStatusModal('成功', '已使用邀请码注册!');
+                            loadUserData();
+                        })
+                        .catch(error => {
+                            console.error("使用邀请码注册失败:", error);
+                        });
+                }
+            }
+            
+            // 页面加载完成后检查钱包连接状态
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.request({ method: 'eth_accounts' })
+                    .then(result => {
+                        if (result.length > 0) {
+                            accounts = result;
+                            web3 = new Web3(window.ethereum);
+                            
+                            // 初始化合约实例
+                            contracts.gggToken = new web3.eth.Contract(contractConfig.gggToken.abi, contractConfig.gggToken.address);
+                            contracts.fggToken = new web3.eth.Contract(contractConfig.fggToken.abi, contractConfig.fggToken.address);
+                            contracts.farmNFT = new web3.eth.Contract(contractConfig.farmNFT.abi, contractConfig.farmNFT.address);
+                            contracts.cowNFT = new web3.eth.Contract(contractConfig.cowNFT.abi, contractConfig.cowNFT.address);
+                            contracts.market = new web3.eth.Contract(contractConfig.market.abi, contractConfig.market.address);
+                            contracts.rewardSystem = new web3.eth.Contract(contractConfig.rewardSystem.abi, contractConfig.rewardSystem.address);
+                            
+                            // 更新UI
+                            updateWalletInfo();
+                            loadUserData();
+                            checkInviteCode();
+                            
+                            // 监听账户变化
+                            window.ethereum.on('accountsChanged', function(newAccounts) {
+                                accounts = newAccounts;
+                                updateWalletInfo();
+                                loadUserData();
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("检查钱包连接状态失败:", error);
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
