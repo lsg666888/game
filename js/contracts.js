@@ -3419,3 +3419,17 @@ function initContracts(web3) {
     contracts.market = new web3.eth.Contract(contractConfig.market.abi, contractConfig.market.address);
     contracts.rewardSystem = new web3.eth.Contract(contractConfig.rewardSystem.abi, contractConfig.rewardSystem.address);
 }
+// 在contracts.js中添加初始化检查
+function initContracts(web3) {
+    try {
+        if (!web3) throw new Error("Web3未初始化");
+        
+        contracts.gggToken = new web3.eth.Contract(contractConfig.gggToken.abi, contractConfig.gggToken.address);
+        // 其他合约初始化...
+        
+        console.log("合约初始化完成", contracts);
+    } catch (error) {
+        console.error("合约初始化失败:", error);
+        throw error;
+    }
+}
