@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农场链游 - GGG Farm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-tractor me-2"></i>GGG农场链游
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#dashboard">我的农场</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#market">市场</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#rewards">奖励中心</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span id="walletAddress" class="text-white me-3 d-none"></span>
+                    <button class="btn btn-primary" id="depositBtn">
+                        <i class="fas fa-arrow-down me-2"></i>充值到虚拟钱包
+                    </button>
+                    <button id="connectWallet" class="btn connect-wallet-btn">
+                        <i class="fas fa-wallet me-2"></i>连接钱包
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="container my-5">
+        <!-- 钱包连接和代币余额 -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <h5><i class="fas fa-coins me-2"></i>GGG余额</h5>
+                                <div class="token-balance" id="gggBalance">0 GGG</div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h5><i class="fas fa-coins me-2"></i>FGG余额</h5>
+                                <div class="token-balance" id="fggBalance">0 FGG</div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h5><i class="fas fa-wallet me-2"></i>虚拟GGG</h5>
+                                <div class="token-balance" id="virtualGggBalance">0 GGG</div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h5><i class="fas fa-wallet me-2"></i>虚拟FGG</h5>
+                                <div class="token-balance" id="virtualFggBalance">0 FGG</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 仪表盘标签页 -->
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="farms-tab" data-bs-toggle="tab" data-bs-target="#farms" type="button">我的农场</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cows-tab" data-bs-toggle="tab" data-bs-target="#cows" type="button">我的奶牛</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions" type="button">农场操作</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="dashboardTabsContent">
+                    <!-- 农场标签页 -->
+                    <div class="tab-pane fade show active" id="farms" role="tabpanel">
+                        <h4 class="section-title"><i class="fas fa-tractor farm-icon"></i>我的农场</h4>
+                        <div class="row" id="farmList">
+                            <!-- 农场将通过JS动态加载 -->
+                            <div class="col-md-12 text-center">
+                                <p>加载中...</p>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <button class="btn btn-primary" id="buyFarmBtn">
+                                    <i class="fas fa-shopping-cart me-2"></i>购买新农场 (60 GGG)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 奶牛标签页 -->
+                    <div class="tab-pane fade" id="cows" role="tabpanel">
+                        <h4 class="section-title"><i class="fas fa-cow cow-icon"></i>我的奶牛</h4>
+                        <div class="row" id="cowList">
+                            <!-- 奶牛将通过JS动态加载 -->
+                            <div class="col-md-12 text-center">
+                                <p>加载中...</p>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <button class="btn btn-primary" id="buyRegularCowBtn">
+                                    <i class="fas fa-cow me-2"></i>购买普通奶牛 (60 GGG)
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-warning" id="buyGoldenCowBtn">
+                                    <i class="fas fa-crown me-2"></i>购买黄金奶牛 (120 GGG)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作标签页 -->
+                    <div class="tab-pane fade" id="actions" role="tabpanel">
+                        <h4 class="section-title"><i class="fas fa-tasks me-2"></i>农场操作</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-seedling me-2"></i>农场施肥</h5>
+                                        <p class="card-text">为农场施肥以收获FGG代币。每个农场每天需要施肥一次。</p>
+                                        <div class="mb-3">
+                                            <label for="fertilizeFarmId" class="form-label">选择农场ID</label>
+                                            <select class="form-select" id="fertilizeFarmId">
+                                                <!-- 农场ID将通过JS动态加载 -->
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-primary" id="fertilizeBtn">
+                                            <i class="fas fa-hand-holding-water me-2"></i>施肥 (1 GGG)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>收获FGG</h5>
+                                        <p class="card-text">从已施肥的农场收获FGG代币。每个农场每天可收获24 FGG。</p>
+                                        <div class="mb-3">
+                                            <label for="harvestFarmId" class="form-label">选择农场ID</label>
+                                            <select class="form-select" id="harvestFarmId">
+                                                <!-- 农场ID将通过JS动态加载 -->
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-primary" id="harvestBtn">
+                                            <i class="fas fa-hands-helping me-2"></i>收获FGG
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-cow me-2"></i>喂养奶牛</h5>
+                                        <p class="card-text">喂养奶牛以维持GGG代币的生产。</p>
+                                        <div class="mb-3">
+                                            <label for="feedCowId" class="form-label">选择奶牛ID</label>
+                                            <select class="form-select" id="feedCowId">
+                                                <!-- 奶牛ID将通过JS动态加载 -->
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">喂养类型</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="feedType" id="feedRegular" value="regular" checked>
+                                                <label class="form-check-label" for="feedRegular">普通奶牛 (1 FGG/小时)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="feedType" id="feedGolden" value="golden">
+                                                <label class="form-check-label" for="feedGolden">黄金奶牛 (2 FGG/小时)</label>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary" id="feedCowBtn">
+                                            <i class="fas fa-utensils me-2"></i>喂养奶牛
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-random me-2"></i>合成奶牛</h5>
+                                        <p class="card-text">将两头普通奶牛合成为一头黄金奶牛 (70%成功率)。</p>
+                                        <div class="mb-3">
+                                            <label for="cowId1" class="form-label">第一头奶牛ID</label>
+                                            <select class="form-select" id="cowId1">
+                                                <!-- 奶牛ID将通过JS动态加载 -->
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="cowId2" class="form-label">第二头奶牛ID</label>
+                                            <select class="form-select" id="cowId2">
+                                                <!-- 奶牛ID将通过JS动态加载 -->
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-warning" id="mergeCowsBtn">
+                                            <i class="fas fa-random me-2"></i>合成奶牛
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 市场标签页 -->
+        <div class="row mt-5" id="market">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="section-title"><i class="fas fa-store me-2"></i>市场</h4>
+                        <ul class="nav nav-tabs" id="marketTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="buy-tab" data-bs-toggle="tab" data-bs-target="#buy" type="button">购买</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="sell-tab" data-bs-toggle="tab" data-bs-target="#sell" type="button">出售</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="my-orders-tab" data-bs-toggle="tab" data-bs-target="#my-orders" type="button">我的订单</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="marketTabsContent">
+                            <div class="tab-pane fade show active" id="buy" role="tabpanel">
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-tractor me-2"></i>农场</h5>
+                                        <div class="list-group" id="farmMarketList">
+                                            <!-- 农场市场列表将通过JS动态加载 -->
+                                            <div class="list-group-item text-center">
+                                                <p>加载中...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-cow me-2"></i>奶牛</h5>
+                                        <div class="list-group" id="cowMarketList">
+                                            <!-- 奶牛市场列表将通过JS动态加载 -->
+                                            <div class="list-group-item text-center">
+                                                <p>加载中...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="sell" role="tabpanel">
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title"><i class="fas fa-tractor me-2"></i>出售农场</h5>
+                                                <div class="mb-3">
+                                                    <label for="sellFarmId" class="form-label">选择农场ID</label>
+                                                    <select class="form-select" id="sellFarmId">
+                                                        <!-- 农场ID将通过JS动态加载 -->
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="farmPrice" class="form-label">价格 (GGG)</label>
+                                                    <input type="number" class="form-control" id="farmPrice" min="1">
+                                                </div>
+                                                <button class="btn btn-primary" id="sellFarmBtn">
+                                                    <i class="fas fa-tag me-2"></i>上架农场
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title"><i class="fas fa-cow me-2"></i>出售奶牛</h5>
+                                                <div class="mb-3">
+                                                    <label for="sellCowId" class="form-label">选择奶牛ID</label>
+                                                    <select class="form-select" id="sellCowId">
+                                                        <!-- 奶牛ID将通过JS动态加载 -->
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="cowPrice" class="form-label">价格 (GGG)</label>
+                                                    <input type="number" class="form-control" id="cowPrice" min="1">
+                                                </div>
+                                                <button class="btn btn-primary" id="sellCowBtn">
+                                                    <i class="fas fa-tag me-2"></i>上架奶牛
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="my-orders" role="tabpanel">
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <h5>我的出售订单</h5>
+                                        <div class="list-group" id="mySellOrders">
+                                            <!-- 我的出售订单将通过JS动态加载 -->
+                                            <div class="list-group-item text-center">
+                                                <p>加载中...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 奖励中心标签页 -->
+        <div class="row mt-5" id="rewards">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="section-title"><i class="fas fa-gift me-2"></i>奖励中心</h4>
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-user-plus feature-icon"></i>
+                                        <h5 class="card-title">注册奖励</h5>
+                                        <p class="card-text">新用户注册可获得10 GGG奖励</p>
+                                        <button class="btn btn-primary" id="registerBtn">
+                                            <i class="fas fa-user-plus me-2"></i>领取注册奖励
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-calendar-check feature-icon"></i>
+                                        <h5 class="card-title">每日签到</h5>
+                                        <p class="card-text">每日签到可获得1 GGG奖励</p>
+                                        <div class="mb-3">
+                                            <div class="progress">
+                                                <div id="signInProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            <small id="signInStatus">今日未签到</small>
+                                        </div>
+                                        <button class="btn btn-primary" id="signInBtn">
+                                            <i class="fas fa-calendar-check me-2"></i>每日签到
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-users feature-icon"></i>
+                                        <h5 class="card-title">邀请奖励</h5>
+                                        <p class="card-text">邀请好友可获得5 GGG/人奖励</p>
+                                        <div class="mb-3">
+                                            <p>已邀请: <span id="inviteCount">0</span> 人</p>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <input type="text" class="form-control" id="inviteCode" placeholder="输入邀请码" disabled>
+                                            <button class="btn btn-outline-secondary" type="button" id="copyInviteBtn">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <button class="btn btn-primary" id="inviteBtn">
+                                            <i class="fas fa-user-friends me-2"></i>生成邀请链接
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-wallet me-2"></i>提现</h5>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="withdrawAmount" class="form-label">提现金额</label>
+                                                <input type="number" class="form-control" id="withdrawAmount" min="1">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="withdrawToken" class="form-label">代币类型</label>
+                                                <select class="form-select" id="withdrawToken">
+                                                    <option value="GGG">GGG</option>
+                                                    <option value="FGG">FGG</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>提现将收取3-8%的随机手续费
+                                        </div>
+                                        <button class="btn btn-primary" id="withdrawBtn">
+                                            <i class="fas fa-hand-holding-usd me-2"></i>提现
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 交易确认模态框 -->
+    <div class="modal fade" id="transactionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transactionModalTitle">交易确认</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="transactionModalBody">
+                    <!-- 交易详情将通过JS动态加载 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmTransactionBtn">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 交易状态模态框 -->
+    <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalTitle">交易状态</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="statusModalBody">
+                    <!-- 状态信息将通过JS动态加载 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-tractor me-2"></i>GGG农场链游</h5>
+                    <p>一个基于区块链的农场模拟游戏，体验种植、养殖和交易的乐趣。</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>快速链接</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#dashboard" class="text-white">我的农场</a></li>
+                        <li><a href="#market" class="text-white">市场</a></li>
+                        <li><a href="#rewards" class="text-white">奖励中心</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>联系我们</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fab fa-twitter me-2"></i>Twitter</li>
+                        <li><i class="fab fa-discord me-2"></i>Discord</li>
+                        <li><i class="fab fa-telegram me-2"></i>Telegram</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12 text-center">
+                    <p class="mb-0">&copy; 2023 GGG农场链游. 保留所有权利.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    
+    <!-- 应用脚本 -->
+    <script src="js/contracts.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/wallet.js"></script>
+    <script src="js/farms.js"></script>
+    <script src="js/cows.js"></script>
+    <script src="js/market.js"></script>
+    <script src="js/rewards.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
