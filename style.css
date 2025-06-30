@@ -1,0 +1,119 @@
+:root {
+    --primary-color: #4CAF50;
+    --secondary-color: #8BC34A;
+    --accent-color: #FFC107;
+    --dark-color: #388E3C;
+    --light-color: #DCEDC8;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+}
+
+.navbar {
+    background-color: var(--dark-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card {
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--dark-color);
+    border-color: var(--dark-color);
+}
+
+.btn-warning {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #333;
+}
+
+.section-title {
+    color: var(--dark-color);
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.farm-icon {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin-right: 10px;
+}
+
+.cow-icon {
+    color: #795548;
+    font-size: 2rem;
+    margin-right: 10px;
+}
+
+.token-balance {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--dark-color);
+}
+
+.modal-content {
+    border-radius: 15px;
+}
+
+.tab-content {
+    padding: 20px;
+    background-color: white;
+    border-radius: 0 0 15px 15px;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: white;
+    border-color: #dee2e6 #dee2e6 #fff;
+    color: var(--dark-color);
+    font-weight: bold;
+}
+
+.progress {
+    height: 20px;
+    border-radius: 10px;
+}
+
+.progress-bar {
+    background-color: var(--primary-color);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.connect-wallet-btn {
+    background-color: #f5841f;
+    border-color: #f5841f;
+    color: white;
+}
+
+.connect-wallet-btn:hover {
+    background-color: #e2731b;
+    border-color: #e2731b;
+    color: white;
+}
