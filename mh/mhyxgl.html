@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmGame 合约部署控制台</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:disabled {
+            background-color: #cccccc;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        .contract-address {
+            font-family: monospace;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FarmGame 合约部署控制台</h1>
+        
+        <div class="section">
+            <h2>1. 连接钱包</h2>
+            <button id="connectWallet">连接MetaMask钱包</button>
+            <div id="walletStatus" class="status">未连接钱包</div>
+            <div id="walletAddress" class="contract-address"></div>
+            <div id="networkInfo"></div>
+        </div>
+        
+        <div class="section">
+            <h2>2. 部署合约</h2>
+            <button id="deployGGG" disabled>部署GGG代币</button>
+            <button id="deployFGG" disabled>部署FGG代币</button>
+            <button id="deployFarmGame" disabled>部署FarmGame</button>
+            <div id="deployStatus" class="status">等待部署...</div>
+            <div>
+                <h3>合约地址</h3>
+                <p>GGG Token: <span id="gggAddress" class="contract-address">未部署</span></p>
+                <p>FGG Token: <span id="fggAddress" class="contract-address">未部署</span></p>
+                <p>FarmGame: <span id="farmGameAddress" class="contract-address">未部署</span></p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>3. 授权合约</h2>
+            <button id="authorizeGGG" disabled>授权GGG</button>
+            <button id="authorizeFGG" disabled>授权FGG</button>
+            <div id="authorizeStatus" class="status">等待授权...</div>
+        </div>
+        
+        <div class="section">
+            <h2>4. 管理功能</h2>
+            <h3>设置盲盒价格</h3>
+            <input type="number" id="blindBoxPrice" placeholder="输入盲盒价格(单位:GGG)" min="1">
+            <button id="setBlindBoxPrice" disabled>设置价格</button>
+            
+            <h3>设置NFT参数</h3>
+            <select id="nftType">
+                <option value="0">普通奶牛</option>
+                <option value="1">黄金奶牛</option>
+                <option value="2">稀有奶牛</option>
+                <option value="3">初级牧场</option>
+                <option value="4">中级牧场</option>
+                <option value="5">高级牧场</option>
+            </select>
+            <input type="number" id="productionRate" placeholder="生产速率(单位:wei)" min="1">
+            <input type="number" id="feedRequirement" placeholder="喂养需求(单位:wei)" min="1">
+            <input type="text" id="imageURI" placeholder="图片URL">
+            <button id="setNFTConfig" disabled>设置NFT参数</button>
+            
+            <div id="managementStatus" class="status">等待操作...</div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let provider;
+        let signer;
+        let gggToken;
+        let fggToken;
+        let farmGame;
+        
+        // 合约ABI (简化版，实际使用时替换为完整ABI)
+        const GGGTokenABI = [
+            "function setGameContract(address gameContract) external",
+            // 其他必要函数...
+        ];
+        
+        const FGGTokenABI = [
+            "function setGameContract(address gameContract) external",
+            // 其他必要函数...
+        ];
+        
+        const FarmGameABI = [
+            "function setBlindBoxPrice(uint256 newPrice) external",
+            "function setNFTConfig(uint8 nftType, uint256 productionRate, uint256 feedRequirement, string memory imageURI) external",
+            // 其他必要函数...
+        ];
+        
+        // 连接钱包
+        document.getElementById('connectWallet').addEventListener('click', async () => {
+            try {
+                if (window.ethereum) {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    signer = await provider.getSigner();
+                    const address = await signer.getAddress();
+                    const network = await provider.getNetwork();
+                    
+                    document.getElementById('walletStatus').textContent = "钱包已连接";
+                    document.getElementById('walletStatus').className = "status success";
+                    document.getElementById('walletAddress').textContent = address;
+                    document.getElementById('networkInfo').textContent = `网络: ${network.name} (ID: ${network.chainId})`;
+                    
+                    // 启用部署按钮
+                    document.getElementById('deployGGG').disabled = false;
+                    document.getElementById('deployFGG').disabled = false;
+                } else {
+                    throw new Error("请安装MetaMask或其他Web3钱包");
+                }
+            } catch (error) {
+                document.getElementById('walletStatus').textContent = "错误: " + error.message;
+                document.getElementById('walletStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 部署GGG代币
+        document.getElementById('deployGGG').addEventListener('click', async () => {
+            try {
+                document.getElementById('deployStatus').textContent = "正在部署GGG代币...";
+                const GGGToken = await ethers.getContractFactory("GGGToken", signer);
+                gggToken = await GGGToken.deploy(await signer.getAddress());
+                await gggToken.waitForDeployment();
+                
+                document.getElementById('gggAddress').textContent = await gggToken.getAddress();
+                document.getElementById('deployStatus').textContent = "GGG代币部署成功!";
+                document.getElementById('deployStatus').className = "status success";
+                
+                // 启用FGG部署
+                document.getElementById('deployFGG').disabled = false;
+            } catch (error) {
+                document.getElementById('deployStatus').textContent = "部署失败: " + error.message;
+                document.getElementById('deployStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 部署FGG代币
+        document.getElementById('deployFGG').addEventListener('click', async () => {
+            try {
+                document.getElementById('deployStatus').textContent = "正在部署FGG代币...";
+                const FGGToken = await ethers.getContractFactory("FGGToken", signer);
+                fggToken = await FGGToken.deploy(await signer.getAddress());
+                await fggToken.waitForDeployment();
+                
+                document.getElementById('fggAddress').textContent = await fggToken.getAddress();
+                document.getElementById('deployStatus').textContent = "FGG代币部署成功!";
+                document.getElementById('deployStatus').className = "status success";
+                
+                // 启用FarmGame部署
+                document.getElementById('deployFarmGame').disabled = false;
+            } catch (error) {
+                document.getElementById('deployStatus').textContent = "部署失败: " + error.message;
+                document.getElementById('deployStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 部署FarmGame
+        document.getElementById('deployFarmGame').addEventListener('click', async () => {
+            try {
+                if (!gggToken || !fggToken) {
+                    throw new Error("请先部署GGG和FGG代币");
+                }
+                
+                document.getElementById('deployStatus').textContent = "正在部署FarmGame...";
+                const FarmGame = await ethers.getContractFactory("FarmGame", signer);
+                farmGame = await FarmGame.deploy(
+                    await gggToken.getAddress(),
+                    await fggToken.getAddress()
+                );
+                await farmGame.waitForDeployment();
+                
+                document.getElementById('farmGameAddress').textContent = await farmGame.getAddress();
+                document.getElementById('deployStatus').textContent = "FarmGame部署成功!";
+                document.getElementById('deployStatus').className = "status success";
+                
+                // 启用授权按钮
+                document.getElementById('authorizeGGG').disabled = false;
+                document.getElementById('authorizeFGG').disabled = false;
+            } catch (error) {
+                document.getElementById('deployStatus').textContent = "部署失败: " + error.message;
+                document.getElementById('deployStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 授权GGG
+        document.getElementById('authorizeGGG').addEventListener('click', async () => {
+            try {
+                if (!gggToken || !farmGame) {
+                    throw new Error("合约未部署");
+                }
+                
+                document.getElementById('authorizeStatus').textContent = "正在授权GGG...";
+                await gggToken.setGameContract(await farmGame.getAddress());
+                document.getElementById('authorizeStatus').textContent = "GGG授权成功!";
+                document.getElementById('authorizeStatus').className = "status success";
+            } catch (error) {
+                document.getElementById('authorizeStatus').textContent = "授权失败: " + error.message;
+                document.getElementById('authorizeStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 授权FGG
+        document.getElementById('authorizeFGG').addEventListener('click', async () => {
+            try {
+                if (!fggToken || !farmGame) {
+                    throw new Error("合约未部署");
+                }
+                
+                document.getElementById('authorizeStatus').textContent = "正在授权FGG...";
+                await fggToken.setGameContract(await farmGame.getAddress());
+                document.getElementById('authorizeStatus').textContent = "FGG授权成功!";
+                document.getElementById('authorizeStatus').className = "status success";
+                
+                // 启用管理功能
+                document.getElementById('setBlindBoxPrice').disabled = false;
+                document.getElementById('setNFTConfig').disabled = false;
+            } catch (error) {
+                document.getElementById('authorizeStatus').textContent = "授权失败: " + error.message;
+                document.getElementById('authorizeStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 设置盲盒价格
+        document.getElementById('setBlindBoxPrice').addEventListener('click', async () => {
+            try {
+                const price = document.getElementById('blindBoxPrice').value;
+                if (!price || isNaN(price)) {
+                    throw new Error("请输入有效的价格");
+                }
+                
+                document.getElementById('managementStatus').textContent = "正在设置盲盒价格...";
+                await farmGame.setBlindBoxPrice(ethers.parseUnits(price, 18));
+                document.getElementById('managementStatus').textContent = "盲盒价格设置成功!";
+                document.getElementById('managementStatus').className = "status success";
+            } catch (error) {
+                document.getElementById('managementStatus').textContent = "设置失败: " + error.message;
+                document.getElementById('managementStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 设置NFT参数
+        document.getElementById('setNFTConfig').addEventListener('click', async () => {
+            try {
+                const nftType = document.getElementById('nftType').value;
+                const productionRate = document.getElementById('productionRate').value;
+                const feedRequirement = document.getElementById('feedRequirement').value;
+                const imageURI = document.getElementById('imageURI').value;
+                
+                if (!productionRate || !feedRequirement || !imageURI) {
+                    throw new Error("请填写所有参数");
+                }
+                
+                document.getElementById('managementStatus').textContent = "正在设置NFT参数...";
+                await farmGame.setNFTConfig(
+                    nftType,
+                    productionRate,
+                    feedRequirement,
+                    imageURI
+                );
+                document.getElementById('managementStatus').textContent = "NFT参数设置成功!";
+                document.getElementById('managementStatus').className = "status success";
+            } catch (error) {
+                document.getElementById('managementStatus').textContent = "设置失败: " + error.message;
+                document.getElementById('managementStatus').className = "status error";
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
