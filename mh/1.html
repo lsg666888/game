@@ -1,0 +1,2171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmGame CFX链管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/js-conflux-sdk@2.0.7/dist/js-conflux-sdk.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+            min-height: 20px;
+        }
+        .success {
+            color: #28a745;
+            border-left: 4px solid #28a745;
+            padding-left: 10px;
+        }
+        .error {
+            color: #dc3545;
+            border-left: 4px solid #dc3545;
+            padding-left: 10px;
+        }
+        .contract-address {
+            font-family: monospace;
+            word-break: break-all;
+            background-color: #f0f0f0;
+            padding: 5px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: -1px;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 10px 16px;
+            transition: 0.3s;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .tabcontent {
+            display: none;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            background-color: white;
+        }
+        .network-selector {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #e9f7ef;
+            border-radius: 4px;
+        }
+        .cfx-watermark {
+            text-align: right;
+            color: #666;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FarmGame CFX链管理系统</h1>
+        <div class="cfx-watermark">专为 Conflux Network 设计</div>
+        
+        <!-- 网络选择 -->
+        <div class="network-selector">
+            <h3>选择Conflux网络</h3>
+            <select id="networkSelect">
+                <option value="https://main.confluxrpc.com">Conflux 主网</option>
+                <option value="https://test.confluxrpc.com">Conflux 测试网</option>
+                <option value="http://localhost:12537">本地节点</option>
+            </select>
+            <button id="connectNetwork">连接网络</button>
+            <div id="networkStatus" class="status">未连接网络</div>
+        </div>
+        
+        <!-- 选项卡导航 -->
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'deployTab')">全新部署</button>
+            <button class="tablinks" onclick="openTab(event, 'existingTab')">连接已有合约</button>
+        </div>
+
+        <!-- 全新部署选项卡 -->
+        <div id="deployTab" class="tabcontent" style="display: block;">
+            <div class="section">
+                <h2>1. 连接钱包</h2>
+                <button id="connectWallet">连接Conflux钱包</button>
+                <div id="walletStatus" class="status">未连接钱包</div>
+                <div id="walletAddress" class="contract-address"></div>
+            </div>
+            
+            <div class="section">
+                <h2>2. 部署合约</h2>
+                <button id="deployGGG" disabled>部署GGG代币</button>
+                <button id="deployFGG" disabled>部署FGG代币</button>
+                <button id="deployFarmGame" disabled>部署FarmGame</button>
+                <div id="deployStatus" class="status">等待部署...</div>
+            </div>
+            
+            <div class="section">
+                <h2>3. 授权合约</h2>
+                <button id="authorizeGGG" disabled>授权GGG</button>
+                <button id="authorizeFGG" disabled>授权FGG</button>
+                <div id="authorizeStatus" class="status">等待授权...</div>
+            </div>
+        </div>
+
+        <!-- 连接已有合约选项卡 -->
+        <div id="existingTab" class="tabcontent">
+            <div class="section">
+                <h2>连接已有合约</h2>
+                <div>
+                    <h3>GGG代币合约地址</h3>
+                    <input type="text" id="existingGGG" placeholder="cfx:type.contract:...">
+                    <button id="connectGGG">连接GGG</button>
+                    <div id="gggStatus" class="status">未连接</div>
+                </div>
+                
+                <div>
+                    <h3>FGG代币合约地址</h3>
+                    <input type="text" id="existingFGG" placeholder="cfx:type.contract:...">
+                    <button id="connectFGG">连接FGG</button>
+                    <div id="fggStatus" class="status">未连接</div>
+                </div>
+                
+                <div>
+                    <h3>FarmGame合约地址</h3>
+                    <input type="text" id="existingFarmGame" placeholder="cfx:type.contract:...">
+                    <button id="connectFarmGame">连接FarmGame</button>
+                    <div id="farmGameStatus" class="status">未连接</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通用管理功能 -->
+        <div class="section">
+            <h2>管理功能</h2>
+            <div>
+                <h3>当前合约地址</h3>
+                <p>GGG Token: <span id="currentGGG" class="contract-address">未连接</span></p>
+                <p>FGG Token: <span id="currentFGG" class="contract-address">未连接</span></p>
+                <p>FarmGame: <span id="currentFarmGame" class="contract-address">未连接</span></p>
+            </div>
+            
+            <h3>设置盲盒价格</h3>
+            <input type="number" id="blindBoxPrice" placeholder="输入盲盒价格(单位:GGG)" min="1">
+            <button id="setBlindBoxPrice" disabled>设置价格</button>
+            
+            <h3>设置NFT参数</h3>
+            <select id="nftType">
+                <option value="0">普通奶牛</option>
+                <option value="1">黄金奶牛</option>
+                <option value="2">稀有奶牛</option>
+                <option value="3">初级牧场</option>
+                <option value="4">中级牧场</option>
+                <option value="5">高级牧场</option>
+            </select>
+            <input type="number" id="productionRate" placeholder="生产速率(单位:GDrip)" min="1">
+            <input type="number" id="feedRequirement" placeholder="喂养需求(单位:GDrip)" min="1">
+            <input type="text" id="imageURI" placeholder="图片URL (如: https://example.com/cow.png)">
+            <button id="setNFTConfig" disabled>设置NFT参数</button>
+            
+            <div id="managementStatus" class="status">等待操作...</div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let conflux;
+        let wallet;
+        let gggToken;
+        let fggToken;
+        let farmGame;
+        
+        // 初始化Conflux JS SDK
+        function initConfluxSDK() {
+            const networkUrl = document.getElementById('networkSelect').value;
+            conflux = new window.Conflux({
+                url: networkUrl,
+                networkId: networkUrl.includes('test') ? 1 : 1029, // 测试网ID=1，主网ID=1029
+                logger: console
+            });
+            
+            // 启用合约缓存
+            conflux.cache = new window.Conflux.Cache();
+        }
+        
+        // 选项卡切换
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // 合约ABI (关键函数部分)
+        const GGGTokenABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "initialOwner",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "allowance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientAllowance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSpender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "gameContract",
+				"type": "address"
+			}
+		],
+		"name": "setGameContract",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+];
+        
+        const FGGTokenABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "initialOwner",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "allowance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientAllowance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSpender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "gameContract",
+				"type": "address"
+			}
+		],
+		"name": "setGameContract",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+];
+        
+        const FarmGameABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "gggTokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "fggTokenAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721IncorrectOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721InsufficientApproval",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOperator",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721NonexistentToken",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "approved",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "ApprovalForAll",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			}
+		],
+		"name": "BlindBoxOpened",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "BlindBoxPurchased",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			}
+		],
+		"name": "ConfigUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isGGG",
+				"type": "bool"
+			}
+		],
+		"name": "Fed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isGGG",
+				"type": "bool"
+			}
+		],
+		"name": "Harvested",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "blindBoxPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "blindBoxRates",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "calculateHarvestAmount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isGGG",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "feed",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fggToken",
+		"outputs": [
+			{
+				"internalType": "contract FGGToken",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getApproved",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gggToken",
+		"outputs": [
+			{
+				"internalType": "contract GGGToken",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "harvest",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "isApprovedForAll",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum FarmGame.NFTType",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"name": "nftConfigs",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "productionRate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "feedRequirement",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "imageURI",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "nftInfos",
+		"outputs": [
+			{
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastHarvestTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastFeedTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isOpened",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "openBlindBox",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ownerOf",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "purchaseBlindBox",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "setApprovalForAll",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newPrice",
+				"type": "uint256"
+			}
+		],
+		"name": "setBlindBoxPrice",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "productionRate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "feedRequirement",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "imageURI",
+				"type": "string"
+			}
+		],
+		"name": "setNFTConfig",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes4",
+				"name": "interfaceId",
+				"type": "bytes4"
+			}
+		],
+		"name": "supportsInterface",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenURI",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawFGG",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawGGG",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+];
+        
+        // 更新当前合约地址显示
+        function updateContractDisplay() {
+            document.getElementById('currentGGG').textContent = gggToken ? gggToken.address : "未连接";
+            document.getElementById('currentFGG').textContent = fggToken ? fggToken.address : "未连接";
+            document.getElementById('currentFarmGame').textContent = farmGame ? farmGame.address : "未连接";
+            
+            // 如果所有合约都已连接，启用管理功能
+            if (gggToken && fggToken && farmGame) {
+                document.getElementById('setBlindBoxPrice').disabled = false;
+                document.getElementById('setNFTConfig').disabled = false;
+            }
+        }
+        
+        // 连接网络
+        document.getElementById('connectNetwork').addEventListener('click', function() {
+            try {
+                initConfluxSDK();
+                document.getElementById('networkStatus').textContent = `已连接到 ${document.getElementById('networkSelect').value}`;
+                document.getElementById('networkStatus').className = "status success";
+                
+                // 启用钱包连接按钮
+                document.getElementById('connectWallet').disabled = false;
+            } catch (error) {
+                document.getElementById('networkStatus').textContent = "网络连接失败: " + error.message;
+                document.getElementById('networkStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 连接钱包
+        document.getElementById('connectWallet').addEventListener('click', async () => {
+            try {
+                if (!conflux) throw new Error("请先连接网络");
+                
+                // 使用Conflux Portal或其他兼容钱包
+                wallet = await conflux.enable();
+                const account = wallet[0];
+                
+                document.getElementById('walletStatus').textContent = "钱包已连接";
+                document.getElementById('walletStatus').className = "status success";
+                document.getElementById('walletAddress').textContent = account;
+                
+                // 启用部署按钮
+                document.getElementById('deployGGG').disabled = false;
+                document.getElementById('deployFGG').disabled = false;
+            } catch (error) {
+                document.getElementById('walletStatus').textContent = "钱包连接失败: " + error.message;
+                document.getElementById('walletStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 部署GGG代币
+        document.getElementById('deployGGG').addEventListener('click', async () => {
+            try {
+                if (!wallet) throw new Error("请先连接钱包");
+                
+                document.getElementById('deployStatus').textContent = "正在部署GGG代币...";
+                
+                // GGGToken合约字节码 (需要替换为实际编译后的字节码)
+                const GGGTokenBytecode = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b"; // 这里应该是实际合约的字节码
+                
+                // 使用Conflux的合约部署方式
+                const receipt = await conflux.sendTransaction({
+                    from: wallet[0],
+                    data: GGGTokenBytecode
+                });
+                
+                // 获取合约地址
+                const contractAddress = receipt.contractCreated;
+                gggToken = conflux.Contract({
+                    abi: GGGTokenABI,
+                    address: contractAddress
+                });
+                
+                document.getElementById('deployStatus').textContent = `GGG代币部署成功! 地址: ${contractAddress}`;
+                document.getElementById('deployStatus').className = "status success";
+                document.getElementById('deployFGG').disabled = false;
+                
+                updateContractDisplay();
+            } catch (error) {
+                document.getElementById('deployStatus').textContent = "部署失败: " + error.message;
+                document.getElementById('deployStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 连接已有GGG合约
+        document.getElementById('connectGGG').addEventListener('click', async () => {
+            try {
+                const address = document.getElementById('existingGGG').value.trim();
+                if (!address.startsWith('cfx:type.contract:')) {
+                    throw new Error("请输入有效的CFX合约地址");
+                }
+                
+                gggToken = conflux.Contract({
+                    abi: GGGTokenABI,
+                    address: address
+                });
+                
+                // 测试连接
+                await gggToken.balanceOf(address);
+                
+                document.getElementById('gggStatus').textContent = "GGG合约连接成功";
+                document.getElementById('gggStatus').className = "status success";
+                updateContractDisplay();
+            } catch (error) {
+                document.getElementById('gggStatus').textContent = "连接失败: " + error.message;
+                document.getElementById('gggStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 设置盲盒价格
+        document.getElementById('setBlindBoxPrice').addEventListener('click', async () => {
+            try {
+                const price = document.getElementById('blindBoxPrice').value;
+                if (!price || isNaN(price)) {
+                    throw new Error("请输入有效的价格");
+                }
+                
+                document.getElementById('managementStatus').textContent = "正在设置盲盒价格...";
+                
+                // 转换为GDrip (1 CFX = 10^18 GDrip)
+                const priceInGDrip = conflux.Drip.fromCFX(price);
+                
+                // 发送交易
+                const txHash = await farmGame.setBlindBoxPrice(priceInGDrip).sendTransaction({
+                    from: wallet[0]
+                });
+                
+                document.getElementById('managementStatus').textContent = `盲盒价格设置成功! 交易哈希: ${txHash}`;
+                document.getElementById('managementStatus').className = "status success";
+            } catch (error) {
+                document.getElementById('managementStatus').textContent = "设置失败: " + error.message;
+                document.getElementById('managementStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 设置NFT参数
+        document.getElementById('setNFTConfig').addEventListener('click', async () => {
+            try {
+                const nftType = document.getElementById('nftType').value;
+                const productionRate = document.getElementById('productionRate').value;
+                const feedRequirement = document.getElementById('feedRequirement').value;
+                const imageURI = document.getElementById('imageURI').value;
+                
+                if (!productionRate || !feedRequirement || !imageURI) {
+                    throw new Error("请填写所有参数");
+                }
+                
+                document.getElementById('managementStatus').textContent = "正在设置NFT参数...";
+                
+                // 发送交易
+                const txHash = await farmGame.setNFTConfig(
+                    nftType,
+                    productionRate,
+                    feedRequirement,
+                    imageURI
+                ).sendTransaction({
+                    from: wallet[0]
+                });
+                
+                document.getElementById('managementStatus').textContent = `NFT参数设置成功! 交易哈希: ${txHash}`;
+                document.getElementById('managementStatus').className = "status success";
+            } catch (error) {
+                document.getElementById('managementStatus').textContent = "设置失败: " + error.message;
+                document.getElementById('managementStatus').className = "status error";
+                console.error(error);
+            }
+        });
+        
+        // 初始化网络连接
+        initConfluxSDK();
+    </script>
+</body>
+</html>
