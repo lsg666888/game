@@ -1,619 +1,1067 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FarmGame CFX链管理系统</title>
-    <script src="https://cdn.jsdelivr.net/npm/js-conflux-sdk@2.0.7/dist/js-conflux-sdk.umd.min.js"></script>
-    <style>
-        :root {
-            --primary: #4CAF50;
-            --secondary: #2196F3;
-            --danger: #f44336;
-            --background: #f5f5f5;
-            --card-bg: white;
-            --text: #333;
-            --border: #ddd;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: var(--background);
-            color: var(--text);
-            line-height: 1.6;
-        }
-        .container {
-            background-color: var(--card-bg);
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        h1, h2, h3 {
-            color: var(--primary);
-            margin-top: 0;
-        }
-        h1 { border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
-        .section {
-            margin-bottom: 30px;
-            padding: 20px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background-color: var(--card-bg);
-            transition: all 0.3s ease;
-        }
-        .section:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            margin: 8px 0;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        button:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        button.secondary {
-            background-color: var(--secondary);
-        }
-        button.danger {
-            background-color: var(--danger);
-        }
-        input, select {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        .status {
-            margin: 15px 0;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            border-left: 4px solid var(--primary);
-        }
-        .error {
-            background-color: #ffebee;
-            color: #c62828;
-            border-left: 4px solid var(--danger);
-        }
-        .warning {
-            background-color: #fff8e1;
-            color: #f57f17;
-            border-left: 4px solid #ffc107;
-        }
-        .contract-address {
-            font-family: 'Courier New', monospace;
-            word-break: break-all;
-            background-color: #f5f5f5;
-            padding: 8px 12px;
-            border-radius: 4px;
-            display: inline-block;
-            font-size: 14px;
-            margin: 5px 0;
-        }
-        .tab-container {
-            margin-bottom: 20px;
-        }
-        .tab-buttons {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: -1px;
-        }
-        .tab-btn {
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            color: var(--text);
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-        }
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-            font-weight: bold;
-        }
-        .tab-content {
-            display: none;
-            padding: 20px 0;
-            animation: fadeIn 0.5s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .network-selector {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #e8f5e9;
-            border-radius: 8px;
-        }
-        .wallet-guide {
-            background-color: #e3f2fd;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .wallet-guide a {
-            color: var(--secondary);
-            font-weight: bold;
-            text-decoration: none;
-        }
-        .wallet-guide a:hover {
-            text-decoration: underline;
-        }
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
-            vertical-align: middle;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .cfx-badge {
-            display: inline-block;
-            background-color: #333;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-left: 10px;
-            vertical-align: middle;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理员管理页面</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    input, button {
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>FarmGame 链上管理系统 <span class="cfx-badge">Conflux</span></h1>
-        
-        <!-- 钱包检测引导 -->
-        <div id="walletGuide" class="wallet-guide" style="display: none;">
-            <h3>未检测到Conflux钱包</h3>
-            <p>要使用此系统，请先安装官方钱包：</p>
-            <a href="https://portal.conflux-chain.org/" target="_blank">下载 Conflux Portal 钱包</a>
-            <p><small>安装后刷新本页面即可</small></p>
-        </div>
+  <h2>管理员管理页面</h2>
 
-        <!-- 网络选择 -->
-        <div class="network-selector">
-            <h3>区块链网络设置</h3>
-            <select id="networkSelect" class="network-select">
-                <option value="https://main.confluxrpc.com">Conflux 主网 (Mainnet)</option>
-                <option value="https://test.confluxrpc.com">Conflux 测试网 (Testnet)</option>
-                <option value="http://localhost:12537">本地开发节点 (Localhost)</option>
-            </select>
-            <button id="connectNetwork" class="secondary">连接网络</button>
-            <div id="networkStatus" class="status">请先选择网络并连接</div>
-        </div>
+  <!-- 管理员登录 -->
+  <div>
+    <button id="connectButton">连接钱包</button>
+  </div>
 
-        <!-- 钱包连接 -->
-        <div class="section">
-            <h2>1. 钱包连接</h2>
-            <button id="connectWallet">连接钱包</button>
-            <div id="walletStatus" class="status">等待连接...</div>
-            <div id="walletInfo" style="display: none;">
-                <p>已连接地址: <span id="walletAddress" class="contract-address"></span></p>
-                <p>网络: <span id="networkInfo"></span></p>
-                <p>余额: <span id="walletBalance"></span> CFX</p>
-            </div>
-        </div>
+  <!-- 盲盒价格更新 -->
+  <div>
+    <h3>更新盲盒价格</h3>
+    <label for="blindBoxPrice">盲盒价格 (GGG):</label>
+    <input type="number" id="blindBoxPrice" placeholder="输入新价格" />
+    <button id="updatePriceButton">更新价格</button>
+  </div>
 
-        <!-- 选项卡 -->
-        <div class="tab-container">
-            <div class="tab-buttons">
-                <button class="tab-btn active" data-tab="deploy">合约部署</button>
-                <button class="tab-btn" data-tab="manage">合约管理</button>
-                <button class="tab-btn" data-tab="interact">交互操作</button>
-            </div>
+  <!-- NFT 配置更新 -->
+  <div>
+    <h3>更新 NFT 配置</h3>
+    <label for="nftType">NFT 类型:</label>
+    <select id="nftType">
+      <option value="0">普通奶牛</option>
+      <option value="1">黄金奶牛</option>
+      <option value="2">稀有奶牛</option>
+      <option value="3">初级牧场</option>
+      <option value="4">中级牧场</option>
+      <option value="5">高级牧场</option>
+    </select><br/>
+    <label for="productionRate">生产率:</label>
+    <input type="number" id="productionRate" placeholder="输入生产率" /><br/>
+    <label for="feedRequirement">喂养需求:</label>
+    <input type="number" id="feedRequirement" placeholder="输入喂养需求" /><br/>
+    <label for="imageURI">图片 URL:</label>
+    <input type="text" id="imageURI" placeholder="输入图片 URL" /><br/>
+    <button id="updateNFTConfigButton">更新配置</button>
+  </div>
 
-            <!-- 部署选项卡 -->
-            <div id="deploy" class="tab-content" style="display: block;">
-                <div class="section">
-                    <h3>部署新合约</h3>
-                    <div class="contract-deploy">
-                        <button id="deployGGG" disabled>部署GGG代币</button>
-                        <button id="deployFGG" disabled>部署FGG代币</button>
-                        <button id="deployFarmGame" disabled>部署FarmGame主合约</button>
-                    </div>
-                    <div id="deployStatus" class="status">准备部署合约...</div>
-                </div>
+  <!-- 提取 GGG 和 FGG -->
+  <div>
+    <h3>提取 GGG 和 FGG</h3>
+    <label for="withdrawAmount">提取数量:</label>
+    <input type="number" id="withdrawAmount" placeholder="输入数量" /><br/>
+    <button id="withdrawGGGButton">提取 GGG</button>
+    <button id="withdrawFGGButton">提取 FGG</button>
+  </div>
 
-                <div class="section">
-                    <h3>合约授权</h3>
-                    <button id="authorizeGGG" disabled>授权GGG代币</button>
-                    <button id="authorizeFGG" disabled>授权FGG代币</button>
-                    <div id="authorizeStatus" class="status">等待授权操作...</div>
-                </div>
-            </div>
+  <script>
+    let provider;
+    let signer;
+    let contract;
+    let contractAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c"; // 填写你的合约地址
+    let contractABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "gggTokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "fggTokenAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721IncorrectOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721InsufficientApproval",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOperator",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721NonexistentToken",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "approved",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "ApprovalForAll",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			}
+		],
+		"name": "BlindBoxOpened",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "BlindBoxPurchased",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			}
+		],
+		"name": "ConfigUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isGGG",
+				"type": "bool"
+			}
+		],
+		"name": "Fed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isGGG",
+				"type": "bool"
+			}
+		],
+		"name": "Harvested",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "blindBoxPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "blindBoxRates",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "calculateHarvestAmount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isGGG",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "feed",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fggToken",
+		"outputs": [
+			{
+				"internalType": "contract FGGToken",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getApproved",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gggToken",
+		"outputs": [
+			{
+				"internalType": "contract GGGToken",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "harvest",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "isApprovedForAll",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum FarmGame.NFTType",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"name": "nftConfigs",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "productionRate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "feedRequirement",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "imageURI",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "nftInfos",
+		"outputs": [
+			{
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastHarvestTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastFeedTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isOpened",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "openBlindBox",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ownerOf",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "purchaseBlindBox",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "setApprovalForAll",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newPrice",
+				"type": "uint256"
+			}
+		],
+		"name": "setBlindBoxPrice",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "productionRate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "feedRequirement",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "imageURI",
+				"type": "string"
+			}
+		],
+		"name": "setNFTConfig",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes4",
+				"name": "interfaceId",
+				"type": "bytes4"
+			}
+		],
+		"name": "supportsInterface",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenURI",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawFGG",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawGGG",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+];
 
-            <!-- 管理选项卡 -->
-            <div id="manage" class="tab-content">
-                <div class="section">
-                    <h3>合约配置</h3>
-                    <div>
-                        <h4>盲盒价格设置</h4>
-                        <input type="number" id="blindBoxPrice" placeholder="输入盲盒价格(单位:GGG)" min="1">
-                        <button id="setBlindBoxPrice" disabled>更新价格</button>
-                    </div>
+    // 连接钱包并初始化合约
+    async function connectWallet() {
+      if (window.conflux) {
+        provider = new conflux.Provider({ chainId: 1 });
+        signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+        alert("钱包连接成功！");
+      } else {
+        alert("请安装 Conflux 钱包！");
+      }
+    }
 
-                    <div style="margin-top: 20px;">
-                        <h4>NFT参数配置</h4>
-                        <select id="nftType">
-                            <option value="0">普通奶牛</option>
-                            <option value="1">黄金奶牛</option>
-                            <option value="2">稀有奶牛</option>
-                            <option value="3">初级牧场</option>
-                            <option value="4">中级牧场</option>
-                            <option value="5">高级牧场</option>
-                        </select>
-                        <input type="number" id="productionRate" placeholder="生产速率(单位:GDrip)" min="1">
-                        <input type="number" id="feedRequirement" placeholder="喂养需求(单位:GDrip)" min="1">
-                        <input type="text" id="imageURI" placeholder="图片URL (如: https://example.com/cow.png)">
-                        <button id="setNFTConfig" disabled>更新NFT参数</button>
-                    </div>
-                    <div id="managementStatus" class="status">准备配置更改...</div>
-                </div>
-            </div>
+    document.getElementById("connectButton").onclick = connectWallet;
 
-            <!-- 交互选项卡 -->
-            <div id="interact" class="tab-content">
-                <div class="section">
-                    <h3>合约信息</h3>
-                    <div>
-                        <p>GGG代币地址: <span id="currentGGG" class="contract-address">未连接</span></p>
-                        <p>FGG代币地址: <span id="currentFGG" class="contract-address">未连接</span></p>
-                        <p>FarmGame地址: <span id="currentFarmGame" class="contract-address">未连接</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    // 更新盲盒价格
+    async function updateBlindBoxPrice() {
+      const price = document.getElementById("blindBoxPrice").value;
+      if (price <= 0) {
+        alert("价格必须大于零");
+        return;
+      }
+      try {
+        const tx = await contract.setBlindBoxPrice(price);
+        await tx.wait();
+        alert("盲盒价格更新成功！");
+      } catch (error) {
+        console.error(error);
+        alert("更新价格失败！");
+      }
+    }
 
-    <script>
-        // 全局变量
-        let conflux;
-        let wallet;
-        let currentNetwork;
-        let gggToken;
-        let fggToken;
-        let farmGame;
-        
-        // 合约ABI (简化版)
-        const GGGTokenABI = [
-            {
-                "inputs": [{"internalType": "address", "name": "initialOwner", "type": "address"}],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "inputs": [{"internalType": "address", "name": "gameContract", "type": "address"}],
-                "name": "setGameContract",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [{"internalType": "address", "name": "owner", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
+    document.getElementById("updatePriceButton").onclick = updateBlindBoxPrice;
 
-        const FGGTokenABI = JSON.parse(JSON.stringify(GGGTokenABI)); // 结构相同
-        
-        const FarmGameABI = [
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "gggTokenAddress", "type": "address"},
-                    {"internalType": "address", "name": "fggTokenAddress", "type": "address"}
-                ],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "inputs": [{"internalType": "uint256", "name": "newPrice", "type": "uint256"}],
-                "name": "setBlindBoxPrice",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint8", "name": "nftType", "type": "uint8"},
-                    {"internalType": "uint256", "name": "productionRate", "type": "uint256"},
-                    {"internalType": "uint256", "name": "feedRequirement", "type": "uint256"},
-                    {"internalType": "string", "name": "imageURI", "type": "string"}
-                ],
-                "name": "setNFTConfig",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
+    // 更新 NFT 配置
+    async function updateNFTConfig() {
+      const nftType = parseInt(document.getElementById("nftType").value);
+      const productionRate = document.getElementById("productionRate").value;
+      const feedRequirement = document.getElementById("feedRequirement").value;
+      const imageURI = document.getElementById("imageURI").value;
 
-        // 初始化Conflux
-        function initConflux(networkUrl) {
-            try {
-                const networkId = networkUrl.includes('test') ? 1 : 1029;
-                conflux = new window.Conflux({
-                    url: networkUrl,
-                    networkId: networkId,
-                    logger: console
-                });
-                currentNetwork = networkUrl;
-                return true;
-            } catch (error) {
-                console.error("初始化Conflux失败:", error);
-                return false;
-            }
-        }
+      if (!productionRate || !feedRequirement || !imageURI) {
+        alert("请填写所有字段！");
+        return;
+      }
 
-        // 更新UI状态
-        function updateUI() {
-            // 更新合约地址显示
-            document.getElementById('currentGGG').textContent = gggToken?.address || "未连接";
-            document.getElementById('currentFGG').textContent = fggToken?.address || "未连接";
-            document.getElementById('currentFarmGame').textContent = farmGame?.address || "未连接";
-            
-            // 启用/禁用按钮
-            const walletConnected = !!wallet;
-            document.getElementById('deployGGG').disabled = !walletConnected;
-            document.getElementById('deployFGG').disabled = !walletConnected;
-            document.getElementById('deployFarmGame').disabled = !walletConnected || !gggToken || !fggToken;
-            
-            const contractsConnected = gggToken && fggToken && farmGame;
-            document.getElementById('authorizeGGG').disabled = !contractsConnected;
-            document.getElementById('authorizeFGG').disabled = !contractsConnected;
-            document.getElementById('setBlindBoxPrice').disabled = !contractsConnected;
-            document.getElementById('setNFTConfig').disabled = !contractsConnected;
-        }
+      try {
+        const tx = await contract.setNFTConfig(
+          nftType, 
+          ethers.utils.parseUnits(productionRate, 18), 
+          ethers.utils.parseUnits(feedRequirement, 18), 
+          imageURI
+        );
+        await tx.wait();
+        alert("NFT 配置更新成功！");
+      } catch (error) {
+        console.error(error);
+        alert("更新配置失败！");
+      }
+    }
 
-        // 显示状态消息
-        function showStatus(elementId, message, isSuccess) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.className = isSuccess ? "status success" : "status error";
-        }
+    document.getElementById("updateNFTConfigButton").onclick = updateNFTConfig;
 
-        // 连接网络
-        document.getElementById('connectNetwork').addEventListener('click', async function() {
-            const networkUrl = document.getElementById('networkSelect').value;
-            showStatus('networkStatus', `正在连接 ${networkUrl}...`, true);
-            
-            try {
-                if (initConflux(networkUrl)) {
-                    // 测试网络连接
-                    const status = await conflux.getStatus();
-                    showStatus('networkStatus', `已连接到 ${networkUrl} (链ID: ${status.chainId})`, true);
-                    
-                    // 检查钱包
-                    checkWallet();
-                    
-                    // 启用钱包连接按钮
-                    document.getElementById('connectWallet').disabled = false;
-                } else {
-                    throw new Error("网络初始化失败");
-                }
-            } catch (error) {
-                showStatus('networkStatus', `连接失败: ${error.message}`, false);
-                console.error("网络连接错误:", error);
-            }
-        });
+    // 提取 GGG
+    async function withdrawGGG() {
+      const amount = document.getElementById("withdrawAmount").value;
+      if (amount <= 0) {
+        alert("提取数量必须大于零");
+        return;
+      }
+      try {
+        const tx = await contract.withdrawGGG(ethers.utils.parseUnits(amount, 18));
+        await tx.wait();
+        alert("提取 GGG 成功！");
+      } catch (error) {
+        console.error(error);
+        alert("提取 GGG 失败！");
+      }
+    }
 
-        // 检查钱包是否安装
-        function checkWallet() {
-            if (typeof window.conflux === 'undefined') {
-                document.getElementById('walletGuide').style.display = 'block';
-                document.getElementById('connectWallet').disabled = true;
-                return false;
-            }
-            document.getElementById('walletGuide').style.display = 'none';
-            return true;
-        }
+    document.getElementById("withdrawGGGButton").onclick = withdrawGGG;
 
-        // 连接钱包
-        document.getElementById('connectWallet').addEventListener('click', async function() {
-            if (!checkWallet()) return;
-            
-            const statusElement = document.getElementById('walletStatus');
-            statusElement.innerHTML = '<span class="loading"></span> 正在连接钱包...';
-            
-            try {
-                // 请求账户访问
-                const accounts = await window.conflux.enable();
-                if (accounts.length === 0) {
-                    throw new Error("钱包已连接但未授权账户");
-                }
-                
-                wallet = accounts[0];
-                conflux.defaultAccount = wallet;
-                
-                // 显示钱包信息
-                document.getElementById('walletAddress').textContent = wallet;
-                document.getElementById('walletInfo').style.display = 'block';
-                
-                // 获取网络信息
-                const network = await conflux.getNetwork();
-                document.getElementById('networkInfo').textContent = `${network.name} (ID: ${network.id})`;
-                
-                // 获取余额
-                const balance = await conflux.getBalance(wallet);
-                document.getElementById('walletBalance').textContent = 
-                    window.Conflux.Drip(balance).toCFX().toDecimalStandardUnit(4);
-                
-                statusElement.innerHTML = '<span class="success">✅ 钱包连接成功</span>';
-                updateUI();
-                
-            } catch (error) {
-                let errorMsg = error.message;
-                if (error.code === 4001) {
-                    errorMsg = "用户拒绝了连接请求";
-                }
-                statusElement.innerHTML = `
-                    <span class="error">❌ 连接失败: ${errorMsg}</span><br>
-                    <small>请确保已解锁钱包并授权此网站</small>
-                `;
-                console.error("钱包连接错误:", error);
-            }
-        });
+    // 提取 FGG
+    async function withdrawFGG() {
+      const amount = document.getElementById("withdrawAmount").value;
+      if (amount <= 0) {
+        alert("提取数量必须大于零");
+        return;
+      }
+      try {
+        const tx = await contract.withdrawFGG(ethers.utils.parseUnits(amount, 18));
+        await tx.wait();
+        alert("提取 FGG 成功！");
+      } catch (error) {
+        console.error(error);
+        alert("提取 FGG 失败！");
+      }
+    }
 
-        // 部署GGG代币
-        document.getElementById('deployGGG').addEventListener('click', async function() {
-            const statusElement = document.getElementById('deployStatus');
-            statusElement.innerHTML = '<span class="loading"></span> 正在部署GGG代币合约...';
-            
-            try {
-                // 这里应该是实际合约的字节码 - 需要替换为真实值
-                const GGGTokenBytecode = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b"; 
-                
-                // 部署合约
-                const receipt = await conflux.sendTransaction({
-                    from: wallet,
-                    data: GGGTokenBytecode
-                });
-                
-                // 获取合约地址
-                const contractAddress = receipt.contractCreated;
-                gggToken = conflux.Contract({
-                    abi: GGGTokenABI,
-                    address: contractAddress
-                });
-                
-                statusElement.innerHTML = `
-                    <span class="success">✅ GGG代币部署成功!</span><br>
-                    合约地址: <span class="contract-address">${contractAddress}</span>
-                `;
-                updateUI();
-                
-            } catch (error) {
-                statusElement.innerHTML = `<span class="error">❌ 部署失败: ${error.message}</span>`;
-                console.error("GGG部署错误:", error);
-            }
-        });
-
-        // 授权GGG代币
-        document.getElementById('authorizeGGG').addEventListener('click', async function() {
-            const statusElement = document.getElementById('authorizeStatus');
-            statusElement.innerHTML = '<span class="loading"></span> 正在授权GGG代币...';
-            
-            try {
-                const txHash = await gggToken.setGameContract(farmGame.address).sendTransaction({
-                    from: wallet
-                });
-                
-                statusElement.innerHTML = `
-                    <span class="success">✅ GGG授权成功!</span><br>
-                    交易哈希: <span class="contract-address">${txHash}</span>
-                `;
-                
-            } catch (error) {
-                statusElement.innerHTML = `<span class="error">❌ 授权失败: ${error.message}</span>`;
-                console.error("GGG授权错误:", error);
-            }
-        });
-
-        // 设置盲盒价格
-        document.getElementById('setBlindBoxPrice').addEventListener('click', async function() {
-            const price = document.getElementById('blindBoxPrice').value;
-            if (!price || isNaN(price)) {
-                showStatus('managementStatus', "请输入有效的价格", false);
-                return;
-            }
-            
-            const statusElement = document.getElementById('managementStatus');
-            statusElement.innerHTML = '<span class="loading"></span> 正在更新盲盒价格...';
-            
-            try {
-                const priceInDrip = window.Conflux.Drip.fromCFX(price);
-                const txHash = await farmGame.setBlindBoxPrice(priceInDrip).sendTransaction({
-                    from: wallet
-                });
-                
-                statusElement.innerHTML = `
-                    <span class="success">✅ 盲盒价格更新成功!</span><br>
-                    交易哈希: <span class="contract-address">${txHash}</span>
-                `;
-                
-            } catch (error) {
-                statusElement.innerHTML = `<span class="error">❌ 更新失败: ${error.message}</span>`;
-                console.error("价格设置错误:", error);
-            }
-        });
-
-        // 选项卡切换
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // 切换按钮状态
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
-                // 切换内容
-                const tabId = this.getAttribute('data-tab');
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.style.display = 'none';
-                });
-                document.getElementById(tabId).style.display = 'block';
-            });
-        });
-
-        // 页面加载时初始化
-        window.addEventListener('load', function() {
-            // 默认初始化主网
-            initConflux('https://main.confluxrpc.com');
-            checkWallet();
-            
-            // 监听钱包变化
-            if (window.conflux) {
-                window.conflux.on('accountsChanged', (accounts) => {
-                    if (accounts.length > 0) {
-                        wallet = accounts[0];
-                        document.getElementById('walletAddress').textContent = wallet;
-                        showStatus('walletStatus', '钱包账户已更新', true);
-                    } else {
-                        wallet = null;
-                        showStatus('walletStatus', '钱包已断开', false);
-                    }
-                    updateUI();
-                });
-                
-                window.conflux.on('chainChanged', (chainId) => {
-                    alert(`网络已切换，请刷新页面 (新链ID: ${chainId})`);
-                    location.reload();
-                });
-            }
-        });
-    </script>
+    document.getElementById("withdrawFGGButton").onclick = withdrawFGG;
+  </script>
 </body>
 </html>
