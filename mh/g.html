@@ -687,39 +687,69 @@
       return names[nftType] || names[0];
     }
 
-    // 购买盲盒
-    async function buyBlindBox(boxType) {
-      try {
-        showStatus('shopStatus', '处理中...');
+ // 购买盲盒
+async function purchaseBlindBox() {
+    try {
+        showTransactionModal('购买盲盒', '正在处理您的购买请求...');
         
-        // 检查授权
-        const allowance = await gggTokenContract.allowance(currentAddress, farmGameAddress);
-        const requiredAmount = boxType === 0 ? 
-          ethers.utils.parseUnits("100", 18) : 
-          ethers.utils.parseUnits("300", 18);
+        const price = await farmGameContract.methods.blindBoxPrice().call();
         
-        if (allowance.lt(requiredAmount)) {
-          // 授权GGG
-          const approveTx = await gggTokenContract.approve(
-            farmGameAddress,
-            ethers.constants.MaxUint256
-          );
-          await approveTx.wait();
+        // 检查余额
+        const balance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
+        if (Number(balance) < Number(price)) {
+            hideTransactionModal();
+            showStatus('error', 'GGG余额不足');
+            return;
+        }
+        
+        // 先检查是否已经授权足够的额度
+        const allowance = await gggTokenContract.methods.allowance(accounts[0], farmGameAddress).call();
+        if (Number(allowance) < Number(price)) {
+            showTransactionModal('授权GGG', '正在授权GGG代币给游戏合约...');
+            await gggTokenContract.methods.approve(farmGameAddress, price).send({ from: accounts[0] });
         }
         
         // 购买盲盒
-        const tx = await farmGameContract.buyBlindBox(boxType);
-        await tx.wait();
+        showTransactionModal('购买盲盒', '正在处理您的购买请求...');
+        const receipt = await farmGameContract.methods.purchaseBlindBox().send({ from: accounts[0] });
         
-        showStatus('shopStatus', '✓ 购买成功!', 'success');
-        await updateBalances();
+        // 检查交易状态
+        if (receipt.status) {
+            // 重新加载数据
+            await loadUserData();
+            
+            // 获取最新购买的NFT
+            const balanceAfter = await farmGameContract.methods.balanceOf(accounts[0]).call();
+            const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], balanceAfter - 1).call();
+            currentTokenId = tokenId;
+            
+            // 启用开启按钮
+            document.getElementById('open-btn').disabled = false;
+            
+            hideTransactionModal();
+            showStatus('connected', '盲盒购买成功！现在可以开启它了。');
+        } else {
+            hideTransactionModal();
+            showStatus('error', '购买失败: 交易未成功');
+        }
         
-      } catch (error) {
-        console.error("购买盲盒失败:", error);
-        showStatus('shopStatus', `❌ 购买失败: ${error.message}`, 'error');
-      }
+    } catch (error) {
+        hideTransactionModal();
+        console.error("Error purchasing blind box:", error);
+        
+        // 更友好的错误提示
+        let errorMessage = '购买失败';
+        if (error.message.includes('User denied transaction')) {
+            errorMessage = '您已取消交易';
+        } else if (error.message.includes('execution reverted')) {
+            errorMessage = '购买失败: 合约执行被拒绝';
+        } else {
+            errorMessage = '购买失败: ' + (error.message || '未知错误');
+        }
+        
+        showStatus('error', errorMessage);
     }
-
+}
     // 开盲盒
     async function openBlindBox(plotId) {
       try {
