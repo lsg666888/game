@@ -3,38 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>管理员管理页面</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <title>Conflux管理员管理页面</title>
+  <!-- 使用Conflux官方SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/js-conflux-sdk@2.0.7/dist/js-conflux-sdk.umd.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
+      max-width: 800px;
     }
-    input, button {
-      margin-bottom: 10px;
+    .section {
+      margin-bottom: 30px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    input, select, button {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
-  <h2>管理员管理页面</h2>
+  <h1>Conflux链管理员管理</h1>
 
-  <!-- 管理员登录 -->
-  <div>
-    <button id="connectButton">连接钱包</button>
+  <!-- 网络选择 -->
+  <div class="section">
+    <h3>网络设置</h3>
+    <select id="networkSelect">
+      <option value="https://main.confluxrpc.com">Conflux主网</option>
+      <option value="https://test.confluxrpc.com">Conflux测试网</option>
+    </select>
+    <button id="connectNetwork">连接网络</button>
+    <div id="networkStatus" class="status">未连接网络</div>
   </div>
 
-  <!-- 盲盒价格更新 -->
-  <div>
-    <h3>更新盲盒价格</h3>
-    <label for="blindBoxPrice">盲盒价格 (GGG):</label>
-    <input type="number" id="blindBoxPrice" placeholder="输入新价格" />
+  <!-- 钱包连接 -->
+  <div class="section">
+    <h3>钱包连接</h3>
+    <button id="connectWallet">连接Conflux钱包</button>
+    <div id="walletStatus" class="status">未连接钱包</div>
+    <div id="walletInfo" style="display:none;">
+      <p>地址: <span id="walletAddress"></span></p>
+      <p>余额: <span id="walletBalance"></span> CFX</p>
+    </div>
+  </div>
+
+  <!-- 合约管理功能 -->
+  <div class="section">
+    <h3>合约管理</h3>
+    <div>
+      <label>合约地址: <input type="text" id="contractAddress" value="cfx:type.contract:your-contract-address" /></label>
+      <button id="loadContract">加载合约</button>
+    </div>
+    <div id="contractStatus" class="status">合约未加载</div>
+  </div>
+
+  <!-- 管理功能 -->
+  <div class="section">
+    <h3>盲盒价格设置</h3>
+    <input type="number" id="blindBoxPrice" placeholder="输入新价格(单位:GGG)" />
     <button id="updatePriceButton">更新价格</button>
   </div>
 
-  <!-- NFT 配置更新 -->
-  <div>
-    <h3>更新 NFT 配置</h3>
-    <label for="nftType">NFT 类型:</label>
+  <div class="section">
+    <h3>NFT配置更新</h3>
     <select id="nftType">
       <option value="0">普通奶牛</option>
       <option value="1">黄金奶牛</option>
@@ -42,31 +92,28 @@
       <option value="3">初级牧场</option>
       <option value="4">中级牧场</option>
       <option value="5">高级牧场</option>
-    </select><br/>
-    <label for="productionRate">生产率:</label>
-    <input type="number" id="productionRate" placeholder="输入生产率" /><br/>
-    <label for="feedRequirement">喂养需求:</label>
-    <input type="number" id="feedRequirement" placeholder="输入喂养需求" /><br/>
-    <label for="imageURI">图片 URL:</label>
-    <input type="text" id="imageURI" placeholder="输入图片 URL" /><br/>
+    </select>
+    <input type="number" id="productionRate" placeholder="生产率(单位:GDrip)" />
+    <input type="number" id="feedRequirement" placeholder="喂养需求(单位:GDrip)" />
+    <input type="text" id="imageURI" placeholder="图片URL" />
     <button id="updateNFTConfigButton">更新配置</button>
   </div>
 
-  <!-- 提取 GGG 和 FGG -->
-  <div>
-    <h3>提取 GGG 和 FGG</h3>
-    <label for="withdrawAmount">提取数量:</label>
-    <input type="number" id="withdrawAmount" placeholder="输入数量" /><br/>
-    <button id="withdrawGGGButton">提取 GGG</button>
-    <button id="withdrawFGGButton">提取 FGG</button>
+  <div class="section">
+    <h3>代币提取</h3>
+    <input type="number" id="withdrawAmount" placeholder="数量(单位:个)" />
+    <button id="withdrawGGGButton">提取GGG</button>
+    <button id="withdrawFGGButton">提取FGG</button>
   </div>
 
   <script>
-    let provider;
-    let signer;
+    // 全局变量
+    let conflux;
+    let wallet;
     let contract;
-    let contractAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c"; // 填写你的合约地址
-    let contractABI = [
+    
+    // 合约ABI (与之前相同)
+    const contractABI = [
 	{
 		"inputs": [
 			{
@@ -961,150 +1008,176 @@
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}
-];
+]; // 保持原有ABI不变
 
-    // Conflux 网络配置
-    const confluxChainId = 1; // Conflux 主网 Chain ID
-    const confluxRpcUrl = "https://mainnet-rpc.confluxnetwork.org"; // Conflux RPC URL
-    const confluxScanUrl = "https://confluxscan.io/"; // Conflux 浏览器 URL
-
-    // 连接钱包并初始化合约
-    async function connectWallet() {
-      if (window.ethereum || window.conflux) {
-        if (window.ethereum) {
-          // 如果是 MetaMask 钱包
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          
-          // 自动切换到 Conflux 网络
-          try {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [
-                {
-                  chainId: `0x${confluxChainId.toString(16)}`, // Conflux 主网的 16 进制 Chain ID
-                  chainName: 'Conflux Network',
-                  nativeCurrency: {
-                    name: 'Conflux Token',
-                    symbol: 'CFX',
-                    decimals: 18
-                  },
-                  rpcUrls: [confluxRpcUrl],
-                  blockExplorerUrls: [confluxScanUrl]
-                }
-              ]
-            });
-            alert("Conflux 网络已添加。请确保切换到 Conflux 网络。");
-          } catch (error) {
-            console.error("自动切换网络失败", error);
-            alert("请手动切换到 Conflux 网络！");
-          }
-
-          // 请求用户连接 MetaMask
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-        } else if (window.conflux) {
-          // 如果是 TokenPocket 钱包
-          provider = new conflux.Provider({ chainId: confluxChainId, rpcUrl: confluxRpcUrl });
-        } else {
-          alert("没有检测到支持的钱包，安装 MetaMask 或 TokenPocket！");
-          return;
-        }
-
-        signer = provider.getSigner();
-        contract = new ethers.Contract(contractAddress, contractABI, signer);
-        alert("钱包连接成功！");
-      } else {
-        alert("请安装 MetaMask 或 TokenPocket！");
+    // 初始化Conflux
+    function initConflux(networkUrl) {
+      try {
+        const networkId = networkUrl.includes('test') ? 1 : 1029;
+        conflux = new window.Conflux({
+          url: networkUrl,
+          networkId: networkId,
+          logger: console
+        });
+        return true;
+      } catch (error) {
+        console.error("初始化失败:", error);
+        return false;
       }
     }
 
-    document.getElementById("connectButton").onclick = connectWallet;
+    // 连接网络
+    document.getElementById('connectNetwork').addEventListener('click', async function() {
+      const networkUrl = document.getElementById('networkSelect').value;
+      document.getElementById('networkStatus').textContent = "连接中...";
+      
+      if (initConflux(networkUrl)) {
+        try {
+          const status = await conflux.getStatus();
+          document.getElementById('networkStatus').textContent = 
+            `已连接 ${networkUrl} (链ID: ${status.chainId})`;
+          document.getElementById('connectWallet').disabled = false;
+        } catch (error) {
+          document.getElementById('networkStatus').textContent = "连接失败: " + error.message;
+        }
+      } else {
+        document.getElementById('networkStatus').textContent = "初始化失败";
+      }
+    });
+
+    // 连接钱包
+    document.getElementById('connectWallet').addEventListener('click', async function() {
+      if (!conflux) {
+        alert("请先连接网络");
+        return;
+      }
+      
+      document.getElementById('walletStatus').textContent = "连接中...";
+      
+      try {
+        // 检测钱包
+        if (typeof window.conflux === 'undefined') {
+          throw new Error("请安装Conflux Portal钱包");
+        }
+        
+        // 请求账户访问
+        const accounts = await window.conflux.enable();
+        wallet = accounts[0];
+        
+        // 显示钱包信息
+        document.getElementById('walletAddress').textContent = wallet;
+        document.getElementById('walletInfo').style.display = 'block';
+        
+        // 获取余额
+        const balance = await conflux.getBalance(wallet);
+        document.getElementById('walletBalance').textContent = 
+          window.Conflux.Drip(balance).toCFX().toDecimalStandardUnit(4);
+        
+        document.getElementById('walletStatus').textContent = "钱包已连接";
+        document.getElementById('loadContract').disabled = false;
+        
+      } catch (error) {
+        document.getElementById('walletStatus').textContent = "连接失败: " + error.message;
+        console.error(error);
+      }
+    });
+
+    // 加载合约
+    document.getElementById('loadContract').addEventListener('click', function() {
+      const address = document.getElementById('contractAddress').value.trim();
+      
+      if (!address.startsWith('cfx:type.contract:')) {
+        alert("0xc8De5C417a708a5B3ad2508eca4e93004fa2246c");
+        return;
+      }
+      
+      try {
+        contract = conflux.Contract({
+          abi: contractABI,
+          address: address
+        });
+        document.getElementById('contractStatus').textContent = "合约加载成功";
+        
+        // 启用管理功能
+        document.querySelectorAll('#updatePriceButton, #updateNFTConfigButton, #withdrawGGGButton, #withdrawFGGButton')
+          .forEach(btn => btn.disabled = false);
+          
+      } catch (error) {
+        document.getElementById('contractStatus').textContent = "合约加载失败: " + error.message;
+      }
+    });
 
     // 更新盲盒价格
-    async function updateBlindBoxPrice() {
-      const price = document.getElementById("blindBoxPrice").value;
-      if (price <= 0) {
-        alert("价格必须大于零");
+    document.getElementById('updatePriceButton').addEventListener('click', async function() {
+      const price = document.getElementById('blindBoxPrice').value;
+      if (!price || price <= 0) {
+        alert("请输入有效价格");
         return;
       }
+      
       try {
-        const tx = await contract.setBlindBoxPrice(price);
-        await tx.wait();
-        alert("盲盒价格更新成功！");
+        const priceInDrip = window.Conflux.Drip.fromCFX(price);
+        const txHash = await contract.setBlindBoxPrice(priceInDrip).sendTransaction({
+          from: wallet
+        });
+        alert(`价格更新成功!\n交易哈希: ${txHash}`);
       } catch (error) {
+        alert("更新失败: " + error.message);
         console.error(error);
-        alert("更新价格失败！");
       }
-    }
+    });
 
-    document.getElementById("updatePriceButton").onclick = updateBlindBoxPrice;
-
-    // 更新 NFT 配置
-    async function updateNFTConfig() {
-      const nftType = parseInt(document.getElementById("nftType").value);
-      const productionRate = document.getElementById("productionRate").value;
-      const feedRequirement = document.getElementById("feedRequirement").value;
-      const imageURI = document.getElementById("imageURI").value;
-
+    // 更新NFT配置
+    document.getElementById('updateNFTConfigButton').addEventListener('click', async function() {
+      const nftType = document.getElementById('nftType').value;
+      const productionRate = document.getElementById('productionRate').value;
+      const feedRequirement = document.getElementById('feedRequirement').value;
+      const imageURI = document.getElementById('imageURI').value;
+      
       if (!productionRate || !feedRequirement || !imageURI) {
-        alert("请填写所有字段！");
+        alert("请填写所有字段");
         return;
       }
-
+      
       try {
-        const tx = await contract.setNFTConfig(
-          nftType, 
-          ethers.utils.parseUnits(productionRate, 18), 
-          ethers.utils.parseUnits(feedRequirement, 18), 
+        const txHash = await contract.setNFTConfig(
+          nftType,
+          window.Conflux.Drip.fromCFX(productionRate),
+          window.Conflux.Drip.fromCFX(feedRequirement),
           imageURI
-        );
-        await tx.wait();
-        alert("NFT 配置更新成功！");
+        ).sendTransaction({
+          from: wallet
+        });
+        alert(`配置更新成功!\n交易哈希: ${txHash}`);
       } catch (error) {
+        alert("更新失败: " + error.message);
         console.error(error);
-        alert("更新配置失败！");
       }
-    }
+    });
 
-    document.getElementById("updateNFTConfigButton").onclick = updateNFTConfig;
-
-    // 提取 GGG
-    async function withdrawGGG() {
-      const amount = document.getElementById("withdrawAmount").value;
-      if (amount <= 0) {
-        alert("提取数量必须大于零");
+    // 提取代币
+    async function withdrawToken(isGGG) {
+      const amount = document.getElementById('withdrawAmount').value;
+      if (!amount || amount <= 0) {
+        alert("请输入有效数量");
         return;
       }
+      
       try {
-        const tx = await contract.withdrawGGG(ethers.utils.parseUnits(amount, 18));
-        await tx.wait();
-        alert("提取 GGG 成功！");
+        const amountInDrip = window.Conflux.Drip.fromCFX(amount);
+        const txHash = isGGG 
+          ? await contract.withdrawGGG(amountInDrip).sendTransaction({ from: wallet })
+          : await contract.withdrawFGG(amountInDrip).sendTransaction({ from: wallet });
+          
+        alert(`提取成功!\n交易哈希: ${txHash}`);
       } catch (error) {
+        alert("提取失败: " + error.message);
         console.error(error);
-        alert("提取 GGG 失败！");
       }
     }
 
-    document.getElementById("withdrawGGGButton").onclick = withdrawGGG;
-
-    // 提取 FGG
-    async function withdrawFGG() {
-      const amount = document.getElementById("withdrawAmount").value;
-      if (amount <= 0) {
-        alert("提取数量必须大于零");
-        return;
-      }
-      try {
-        const tx = await contract.withdrawFGG(ethers.utils.parseUnits(amount, 18));
-        await tx.wait();
-        alert("提取 FGG 成功！");
-      } catch (error) {
-        console.error(error);
-        alert("提取 FGG 失败！");
-      }
-    }
-
-    document.getElementById("withdrawFGGButton").onclick = withdrawFGG;
+    document.getElementById('withdrawGGGButton').addEventListener('click', () => withdrawToken(true));
+    document.getElementById('withdrawFGGButton').addEventListener('click', () => withdrawToken(false));
   </script>
 </body>
 </html>
