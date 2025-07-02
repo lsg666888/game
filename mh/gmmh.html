@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2农场游戏盲盒</title>
+    <title>农场游戏盲盒</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
 </head>
@@ -472,7 +472,7 @@ async function purchaseBlindBox() {
             showStatus('connected', '盲盒购买成功！现在可以开启它了。');
             
             // 重新加载用户数据
-            await loadUserData();
+           // await loadUserData();
             
             // 获取最新购买的NFT
             const balanceAfter = await farmGameContract.methods.balanceOf(accounts[0]).call();
