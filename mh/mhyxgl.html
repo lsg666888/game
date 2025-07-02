@@ -963,14 +963,49 @@
 	}
 ];
 
+    // 添加 Conflux 网络的链 ID 和 RPC URL
+    const confluxChainId = 1; // Conflux 主网 Chain ID
+    const confluxRpcUrl = "https://mainnet-rpc.confluxnetwork.org"; // Conflux 主网 RPC URL
+
     // 连接钱包并初始化合约
     async function connectWallet() {
       if (window.ethereum || window.conflux) {
         if (window.ethereum) {
+          // 如果是 MetaMask 钱包
           provider = new ethers.providers.Web3Provider(window.ethereum);
-          await window.ethereum.request({ method: 'eth_requestAccounts' }); // MetaMask 钱包
+          
+          // 自动添加 Conflux 网络到 MetaMask
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [
+                {
+                  chainId: `0x${confluxChainId.toString(16)}`, // 16 进制的 Conflux 主网链 ID
+                  chainName: 'Conflux Network',
+                  nativeCurrency: {
+                    name: 'Conflux Token',
+                    symbol: 'CFX',
+                    decimals: 18
+                  },
+                  rpcUrls: [confluxRpcUrl], // Conflux RPC URL
+                  blockExplorerUrls: ['https://confluxscan.io/']
+                }
+              ]
+            });
+          } catch (error) {
+            console.error("Failed to add Conflux network to MetaMask", error);
+            alert("未能自动切换到 Conflux 网络，请手动切换到 Conflux 网络");
+          }
+
+          // 切换到 Conflux 网络
+          await window.ethereum.request({ method: 'eth_requestAccounts' }); // 请求钱包地址
+          provider = new ethers.providers.Web3Provider(window.ethereum);
         } else if (window.conflux) {
-          provider = new conflux.Provider({ chainId: 1 }); // TokenPocket
+          // 如果是 TokenPocket 钱包
+          provider = new conflux.Provider({
+            chainId: confluxChainId, // Conflux 主网 Chain ID
+            rpcUrl: confluxRpcUrl
+          });
         } else {
           alert("没有检测到支持的钱包，安装 MetaMask 或 TokenPocket！");
           return;
