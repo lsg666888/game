@@ -965,13 +965,22 @@
 
     // 连接钱包并初始化合约
     async function connectWallet() {
-      if (window.conflux) {
-        provider = new conflux.Provider({ chainId: 1 });
+      if (window.ethereum || window.conflux) {
+        if (window.ethereum) {
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          await window.ethereum.request({ method: 'eth_requestAccounts' }); // MetaMask 钱包
+        } else if (window.conflux) {
+          provider = new conflux.Provider({ chainId: 1 }); // TokenPocket
+        } else {
+          alert("没有检测到支持的钱包，安装 MetaMask 或 TokenPocket！");
+          return;
+        }
+
         signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, contractABI, signer);
         alert("钱包连接成功！");
       } else {
-        alert("请安装 Conflux 钱包！");
+        alert("请安装 MetaMask 或 TokenPocket！");
       }
     }
 
