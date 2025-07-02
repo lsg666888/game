@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>666农场游戏管理员面板</title>
+  <title>农场游戏管理员面板</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
   <style>
     body {
@@ -53,6 +53,8 @@
       cursor: pointer;
       font-size: 16px;
       transition: background-color 0.3s;
+      margin-right: 10px;
+      margin-top: 5px;
     }
     button:hover {
       background-color: #2980b9;
@@ -81,11 +83,21 @@
       font-size: 14px;
       color: #7f8c8d;
     }
+    .balance-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .balance-value {
+      font-weight: bold;
+      margin-right: 15px;
+      min-width: 100px;
+    }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>222农场游戏管理员面板</h1>
+    <h1>444农场游戏管理员面板</h1>
     <p>Conflux eSpace 链管理界面</p>
   </div>
 
@@ -138,47 +150,49 @@
   <div class="panel">
     <h2>资金管理</h2>
     <div class="form-group">
+      <label for="depositGGGAmount">转入GGG数量</label>
+      <input type="number" id="depositGGGAmount" placeholder="例如: 10000">
+      <button onclick="depositGGG()">向合约转入GGG</button>
+    </div>
+    
+    <div class="form-group">
       <label for="gggAmount">提取GGG数量</label>
       <input type="number" id="gggAmount" placeholder="例如: 100">
+      <button onclick="withdrawGGG()">提取GGG</button>
     </div>
-    <button onclick="withdrawGGG()">提取GGG</button>
-    <div class="form-group" style="margin-top: 15px;">
+    
+    <div class="form-group">
       <label for="fggAmount">提取FGG数量</label>
       <input type="number" id="fggAmount" placeholder="例如: 100">
+      <button onclick="withdrawFGG()">提取FGG</button>
     </div>
-    <button onclick="withdrawFGG()">提取FGG</button>
+    
     <div id="withdrawStatus" class="status"></div>
   </div>
 
-
-<div class="panel">
-  <h2>合约资金监控</h2>
-  <div>
-    <p>GGG余额: <span id="contractGGGBalance">加载中...</span></p>
-    <p>FGG余额: <span id="contractFGGBalance">加载中...</span></p>
-    <button onclick="refreshBalances()">刷新余额</button>
+  <div class="panel">
+    <h2>合约资金监控</h2>
+    <div class="balance-container">
+      <span>GGG余额: </span>
+      <span id="contractGGGBalance" class="balance-value">加载中...</span>
+      <button onclick="verifyGGGBalance()">链上验证</button>
+    </div>
+    <div class="balance-container">
+      <span>FGG余额: </span>
+      <span id="contractFGGBalance" class="balance-value">加载中...</span>
+    </div>
+    <div class="balance-container">
+      <span>我的GGG余额: </span>
+      <span id="myGGGBalance" class="balance-value">加载中...</span>
+    </div>
+    <div class="balance-container">
+      <span>GGG授权额度: </span>
+      <span id="gggAllowance" class="balance-value">加载中...</span>
+      <button onclick="approveGGG()">授权GGG</button>
+    </div>
+    <button onclick="refreshBalances()">刷新所有余额</button>
   </div>
-</div>
 
-<script>
-async function refreshBalances() {
-  const gggToken = new ethers.Contract(gggTokenAddress, ["function balanceOf(address) view returns (uint256)"], provider);
-  const fggToken = new ethers.Contract(fggTokenAddress, ["function balanceOf(address) view returns (uint256)"], provider);
-  
-  const gggBalance = await gggToken.balanceOf(farmGameAddress);
-  const fggBalance = await fggToken.balanceOf(farmGameAddress);
-  
-  document.getElementById('contractGGGBalance').textContent = ethers.utils.formatUnits(gggBalance, 18);
-  document.getElementById('contractFGGBalance').textContent = ethers.utils.formatUnits(fggBalance, 18);
-}
-
-// 页面加载时自动刷新
-window.addEventListener('load', refreshBalances);
-</script>
-
-
-
-  
   <div class="contract-info">
     <h3>合约信息</h3>
     <p><strong>FarmGame合约地址:</strong> <span id="farmGameAddress">0xc8De5C417a708a5B3ad2508eca4e93004fa2246c</span></p>
@@ -221,7 +235,6 @@ window.addEventListener('load', refreshBalances);
               params: [{ chainId: confluxESpaceChainId }],
             });
           } catch (switchError) {
-            // 如果用户没有添加网络，提示他们添加
             if (switchError.code === 4902) {
               try {
                 await window.ethereum.request({
@@ -258,47 +271,37 @@ window.addEventListener('load', refreshBalances);
         try {
           showStatus('walletStatus', '正在连接钱包...');
           
-          // 检查并切换到正确的网络
           await checkNetwork();
           
-          // 使用钱包的提供者
           provider = new ethers.providers.Web3Provider(window.ethereum);
           await provider.send("eth_requestAccounts", []);
           signer = provider.getSigner();
           currentAddress = await signer.getAddress();
           
-          // 更新UI显示
           document.getElementById('walletAddress').textContent = 
             `已连接钱包: ${currentAddress.substring(0, 6)}...${currentAddress.substring(currentAddress.length - 4)}`;
           
-          // 初始化合约实例
           farmGameContract = await getFarmGameContract();
           
-          // 检查是否是所有者
           const isOwner = await checkIsOwner();
           if (!isOwner) {
             showStatus('walletStatus', '警告: 当前钱包不是合约所有者', 'error');
           } else {
             showStatus('walletStatus', '✓ 已连接 (合约所有者)', 'success');
-            // 加载当前盲盒价格
             loadCurrentBlindBoxPrice();
           }
           
-          // 监听账户变化
           window.ethereum.on('accountsChanged', (newAccounts) => {
             if (newAccounts.length === 0) {
-              // 钱包已锁定
               signer = null;
               currentAddress = null;
               document.getElementById('walletAddress').textContent = '未连接钱包';
               showStatus('walletStatus', '钱包已断开连接', 'error');
             } else {
-              // 切换了账户
-              location.reload(); // 简单处理: 刷新页面
+              location.reload();
             }
           });
           
-          // 监听网络变化
           window.ethereum.on('chainChanged', (chainId) => {
             if (chainId !== confluxESpaceChainId) {
               showStatus('walletStatus', '请切换到Conflux eSpace网络', 'error');
@@ -306,6 +309,9 @@ window.addEventListener('load', refreshBalances);
               location.reload();
             }
           });
+          
+          // 连接后立即刷新余额
+          refreshBalances();
           
         } catch (error) {
           console.error('钱包连接错误:', error);
@@ -319,7 +325,6 @@ window.addEventListener('load', refreshBalances);
     // 获取FarmGame合约实例
     async function getFarmGameContract() {
       const farmGameABI = [
-        // 合约所有者
         {
           "inputs": [],
           "name": "owner",
@@ -327,7 +332,6 @@ window.addEventListener('load', refreshBalances);
           "stateMutability": "view",
           "type": "function"
         },
-        // 设置盲盒价格
         {
           "inputs": [{"internalType": "uint256", "name": "newPrice", "type": "uint256"}],
           "name": "setBlindBoxPrice",
@@ -335,7 +339,6 @@ window.addEventListener('load', refreshBalances);
           "stateMutability": "nonpayable",
           "type": "function"
         },
-        // 获取盲盒价格
         {
           "inputs": [],
           "name": "blindBoxPrice",
@@ -343,7 +346,6 @@ window.addEventListener('load', refreshBalances);
           "stateMutability": "view",
           "type": "function"
         },
-        // 设置NFT配置
         {
           "inputs": [
             {"internalType": "enum FarmGame.NFTType", "name": "nftType", "type": "uint8"},
@@ -356,7 +358,6 @@ window.addEventListener('load', refreshBalances);
           "stateMutability": "nonpayable",
           "type": "function"
         },
-        // 提取GGG
         {
           "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
           "name": "withdrawGGG",
@@ -364,7 +365,6 @@ window.addEventListener('load', refreshBalances);
           "stateMutability": "nonpayable",
           "type": "function"
         },
-        // 提取FGG
         {
           "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
           "name": "withdrawFGG",
@@ -372,7 +372,6 @@ window.addEventListener('load', refreshBalances);
           "stateMutability": "nonpayable",
           "type": "function"
         },
-        // GGG代币地址
         {
           "inputs": [],
           "name": "gggToken",
@@ -380,7 +379,6 @@ window.addEventListener('load', refreshBalances);
           "stateMutability": "view",
           "type": "function"
         },
-        // FGG代币地址
         {
           "inputs": [],
           "name": "fggToken",
@@ -482,197 +480,287 @@ window.addEventListener('load', refreshBalances);
       }
     }
 
-async function withdrawGGG() {
-  try {
-    const amountInput = document.getElementById('gggAmount');
-    const amount = amountInput.value;
-    
-    // 输入验证
-    if (!amount || isNaN(amount)) {
-      throw new Error("请输入有效的GGG数量");
+    // 向合约转入GGG
+    async function depositGGG() {
+      try {
+        const amountInput = document.getElementById('depositGGGAmount');
+        const amount = amountInput.value;
+        
+        if (!amount || isNaN(amount)) {
+          throw new Error("请输入有效的GGG数量");
+        }
+        
+        showStatus('withdrawStatus', '准备转入GGG到合约...');
+        
+        const erc20ABI = [
+          "function transfer(address,uint256) returns (bool)",
+          "function balanceOf(address) view returns (uint256)"
+        ];
+        
+        const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, signer);
+        
+        // 检查调用者余额
+        const myBalance = await gggToken.balanceOf(currentAddress);
+        const amountToDeposit = ethers.utils.parseUnits(amount, 18);
+        
+        if (amountToDeposit.gt(myBalance)) {
+          throw new Error(`您的钱包GGG余额不足。当前余额: ${ethers.utils.formatUnits(myBalance, 18)} GGG`);
+        }
+        
+        // 执行转账
+        const tx = await gggToken.transfer(
+          farmGameAddress,
+          amountToDeposit,
+          { gasLimit: 200000 }
+        );
+        
+        showStatus('withdrawStatus', '交易已发送，等待确认...');
+        await tx.wait();
+        
+        showStatus('withdrawStatus', `✓ 成功转入 ${amount} GGG 到合约`, 'success');
+        amountInput.value = '';
+        refreshBalances();
+        
+      } catch (error) {
+        console.error("转入GGG失败:", error);
+        showStatus('withdrawStatus', `❌ 转入失败: ${error.message}`, 'error');
+      }
     }
-    
-    // 权限检查
-    if (!await checkIsOwner()) {
-      throw new Error("只有合约所有者可以执行此操作");
-    }
-    
-    showStatus('withdrawStatus', '正在检查合约GGG余额和授权...');
-    
-    // GGG代币ABI
-    const erc20ABI = [
-      "function balanceOf(address) view returns (uint256)",
-      "function allowance(address,address) view returns (uint256)"
-    ];
-    const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, provider);
-    
-    // 检查余额
-    const contractBalance = await gggToken.balanceOf(farmGameAddress);
-    const amountToWithdraw = ethers.utils.parseUnits(amount, 18);
-    
-    if (amountToWithdraw.gt(contractBalance)) {
-      throw new Error(`合约GGG余额不足。当前余额: ${ethers.utils.formatUnits(contractBalance, 18)} GGG`);
-    }
-    
-    // 检查授权额度
-    const allowance = await gggToken.allowance(farmGameAddress, currentAddress);
-    if (amountToWithdraw.gt(allowance)) {
-      throw new Error(`合约未授权足够额度。当前授权: ${ethers.utils.formatUnits(allowance, 18)} GGG`);
-    }
-    
-    showStatus('withdrawStatus', '发送提取交易...');
-    
-    // 执行提取
-    const tx = await farmGameContract.withdrawGGG(
-      amountToWithdraw,
-      { gasLimit: 200000 }  // 适当提高gas限制
-    ).catch(error => {
-      // 解析错误信息
-      const revertReason = error.reason || 
-                         (error.data?.message ? error.data.message.split("reverted:")[1] : "") || 
-                         error.message;
-      throw new Error(`交易被拒绝: ${revertReason}`);
-    });
-    
-    showStatus('withdrawStatus', '交易已发送，等待确认...');
-    
-    const receipt = await tx.wait();
-    if (receipt.status === 0) throw new Error("交易执行失败");
-    
-    showStatus('withdrawStatus', `✓ 成功提取 ${amount} GGG`, 'success');
-    amountInput.value = '';
-    refreshBalances(); // 刷新余额显示
-    
-  } catch (error) {
-    console.error("GGG提取错误:", error);
-    showStatus('withdrawStatus', `❌ 提取失败: ${error.message}`, 'error');
-    
-    // 如果是授权问题，提示解决方法
-    if (error.message.includes("授权")) {
-      const fixBtn = document.createElement("button");
-      fixBtn.textContent = "点击授权合约使用GGG";
-      fixBtn.onclick = approveGGG;
-      fixBtn.style.marginLeft = "10px";
-      document.getElementById('withdrawStatus').appendChild(fixBtn);
-    }
-  }
-}
 
-// GGG授权函数
-async function approveGGG() {
-  try {
-    showStatus('withdrawStatus', '正在授权合约使用GGG...');
-    
-    const erc20ABI = ["function approve(address,uint256) returns (bool)"];
-    const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, signer);
-    
-    const tx = await gggToken.approve(
-      farmGameAddress,
-      ethers.constants.MaxUint256, // 授权最大数量
-      { gasLimit: 100000 }
-    );
-    
-    await tx.wait();
-    showStatus('withdrawStatus', '✓ 授权成功，请重试提取', 'success');
-    
-  } catch (error) {
-    showStatus('withdrawStatus', `❌ 授权失败: ${error.message}`, 'error');
-  }
-}
+    // 提取GGG
+    async function withdrawGGG() {
+      try {
+        const amountInput = document.getElementById('gggAmount');
+        const amount = amountInput.value;
+        
+        if (!amount || isNaN(amount)) {
+          throw new Error("请输入有效的GGG数量");
+        }
+        
+        if (!await checkIsOwner()) {
+          throw new Error("只有合约所有者可以执行此操作");
+        }
+        
+        showStatus('withdrawStatus', '正在检查合约GGG余额和授权...');
+        
+        const erc20ABI = [
+          "function balanceOf(address) view returns (uint256)",
+          "function allowance(address,address) view returns (uint256)"
+        ];
+        const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, provider);
+        
+        // 检查余额
+        const contractBalance = await gggToken.balanceOf(farmGameAddress);
+        const amountToWithdraw = ethers.utils.parseUnits(amount, 18);
+        
+        if (amountToWithdraw.gt(contractBalance)) {
+          throw new Error(`合约GGG余额不足。当前余额: ${ethers.utils.formatUnits(contractBalance, 18)} GGG`);
+        }
+        
+        // 检查授权额度
+        const allowance = await gggToken.allowance(farmGameAddress, currentAddress);
+        if (amountToWithdraw.gt(allowance)) {
+          throw new Error(`合约未授权足够额度。当前授权: ${ethers.utils.formatUnits(allowance, 18)} GGG`);
+        }
+        
+        showStatus('withdrawStatus', '发送提取交易...');
+        
+        const tx = await farmGameContract.withdrawGGG(
+          amountToWithdraw,
+          { gasLimit: 200000 }
+        ).catch(error => {
+          const revertReason = error.reason || 
+                             (error.data?.message ? error.data.message.split("reverted:")[1] : "") || 
+                             error.message;
+          throw new Error(`交易被拒绝: ${revertReason}`);
+        });
+        
+        showStatus('withdrawStatus', '交易已发送，等待确认...');
+        
+        const receipt = await tx.wait();
+        if (receipt.status === 0) throw new Error("交易执行失败");
+        
+        showStatus('withdrawStatus', `✓ 成功提取 ${amount} GGG`, 'success');
+        amountInput.value = '';
+        refreshBalances();
+        
+      } catch (error) {
+        console.error("GGG提取错误:", error);
+        showStatus('withdrawStatus', `❌ 提取失败: ${error.message}`, 'error');
+        
+        if (error.message.includes("授权")) {
+          const fixBtn = document.createElement("button");
+          fixBtn.textContent = "点击授权合约使用GGG";
+          fixBtn.onclick = approveGGG;
+          fixBtn.style.marginLeft = "10px";
+          document.getElementById('withdrawStatus').appendChild(fixBtn);
+        }
+      }
+    }
+
+    // GGG授权函数
+    async function approveGGG() {
+      try {
+        showStatus('withdrawStatus', '正在授权合约使用GGG...');
+        
+        const erc20ABI = ["function approve(address,uint256) returns (bool)"];
+        const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, signer);
+        
+        const tx = await gggToken.approve(
+          farmGameAddress,
+          ethers.constants.MaxUint256,
+          { gasLimit: 100000 }
+        );
+        
+        await tx.wait();
+        showStatus('withdrawStatus', '✓ 授权成功，请重试提取', 'success');
+        refreshBalances();
+        
+      } catch (error) {
+        showStatus('withdrawStatus', `❌ 授权失败: ${error.message}`, 'error');
+      }
+    }
 
     // 提取FGG
-// 提取FGG - 修复版本
-async function withdrawFGG() {
-  try {
-    const amountInput = document.getElementById('fggAmount');
-    const amount = amountInput.value;
-    
-    // 验证输入
-    if (!amount || isNaN(amount)) {
-      throw new Error("请输入有效的提取数量");
-    }
-    
-    // 检查所有者权限
-    const isOwner = await checkIsOwner();
-    if (!isOwner) {
-      throw new Error("只有合约所有者可以执行此操作");
-    }
-    
-    showStatus('withdrawStatus', '正在检查合约FGG余额...');
-    
-    // FGG代币ABI (只需要balanceOf方法)
-    const erc20ABI = [
-      {
-        "constant": true,
-        "inputs": [{"name": "_owner", "type": "address"}],
-        "name": "balanceOf",
-        "outputs": [{"name": "balance", "type": "uint256"}],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-      }
-    ];
-    
-    // 创建FGG代币合约实例
-    const fggToken = new ethers.Contract(fggTokenAddress, erc20ABI, signer);
-    
-    // 获取合约中的FGG余额
-    const contractBalance = await fggToken.balanceOf(farmGameAddress);
-    const amountToWithdraw = ethers.utils.parseUnits(amount, 18);
-    
-    // 检查余额是否足够
-    if (amountToWithdraw.gt(contractBalance)) {
-      const formattedBalance = ethers.utils.formatUnits(contractBalance, 18);
-      throw new Error(`合约FGG余额不足。当前余额: ${formattedBalance} FGG`);
-    }
-    
-    showStatus('withdrawStatus', '发送提取交易...');
-    
-    // 发送提取交易
-    const tx = await farmGameContract.withdrawFGG(
-      amountToWithdraw,
-      { gasLimit: 1000000 }  // 增加gas限制
-    ).catch(error => {
-      // 解析revert原因
-      if (error.data && error.data.message) {
-        throw new Error(`合约拒绝交易: ${error.data.message}`);
-      } else if (error.reason) {
-        throw new Error(`交易失败: ${error.reason}`);
-      } else {
-        throw new Error(`交易发送失败: ${error.message}`);
-      }
-    });
-    
-    showStatus('withdrawStatus', '交易已发送，等待确认... (可能需要几分钟)');
-    
-    // 等待交易确认
-    const receipt = await tx.wait();
-    
-    // 检查交易状态
-    if (receipt.status === 0) {
-      // 尝试获取revert原因
+    async function withdrawFGG() {
       try {
-        const code = await provider.call({
-          to: tx.to,
-          data: tx.data
-        }, tx.blockNumber);
-        const reason = ethers.utils.toUtf8String("0x" + code.substr(138));
-        throw new Error(`交易执行失败: ${reason}`);
-      } catch (decodeError) {
-        throw new Error("交易执行失败，原因未知");
+        const amountInput = document.getElementById('fggAmount');
+        const amount = amountInput.value;
+        
+        if (!amount || isNaN(amount)) {
+          throw new Error("请输入有效的提取数量");
+        }
+        
+        if (!await checkIsOwner()) {
+          throw new Error("只有合约所有者可以执行此操作");
+        }
+        
+        showStatus('withdrawStatus', '正在检查合约FGG余额...');
+        
+        const erc20ABI = [
+          {
+            "constant": true,
+            "inputs": [{"name": "_owner", "type": "address"}],
+            "name": "balanceOf",
+            "outputs": [{"name": "balance", "type": "uint256"}],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+          }
+        ];
+        
+        const fggToken = new ethers.Contract(fggTokenAddress, erc20ABI, provider);
+        
+        const contractBalance = await fggToken.balanceOf(farmGameAddress);
+        const amountToWithdraw = ethers.utils.parseUnits(amount, 18);
+        
+        if (amountToWithdraw.gt(contractBalance)) {
+          const formattedBalance = ethers.utils.formatUnits(contractBalance, 18);
+          throw new Error(`合约FGG余额不足。当前余额: ${formattedBalance} FGG`);
+        }
+        
+        showStatus('withdrawStatus', '发送提取交易...');
+        
+        const tx = await farmGameContract.withdrawFGG(
+          amountToWithdraw,
+          { gasLimit: 1000000 }
+        ).catch(error => {
+          if (error.data && error.data.message) {
+            throw new Error(`合约拒绝交易: ${error.data.message}`);
+          } else if (error.reason) {
+            throw new Error(`交易失败: ${error.reason}`);
+          } else {
+            throw new Error(`交易发送失败: ${error.message}`);
+          }
+        });
+        
+        showStatus('withdrawStatus', '交易已发送，等待确认... (可能需要几分钟)');
+        
+        const receipt = await tx.wait();
+        
+        if (receipt.status === 0) {
+          try {
+            const code = await provider.call({
+              to: tx.to,
+              data: tx.data
+            }, tx.blockNumber);
+            const reason = ethers.utils.toUtf8String("0x" + code.substr(138));
+            throw new Error(`交易执行失败: ${reason}`);
+          } catch (decodeError) {
+            throw new Error("交易执行失败，原因未知");
+          }
+        }
+        
+        showStatus('withdrawStatus', `✓ 成功提取 ${amount} FGG`, 'success');
+        amountInput.value = '';
+        refreshBalances();
+        
+      } catch (error) {
+        console.error("提取FGG错误:", error);
+        showStatus('withdrawStatus', `❌ 提取失败: ${error.message}`, 'error');
       }
     }
-    
-    showStatus('withdrawStatus', `✓ 成功提取 ${amount} FGG`, 'success');
-    
-    // 清空输入框
-    amountInput.value = '';
-    
-  } catch (error) {
-    console.error("提取FGG错误:", error);
-    showStatus('withdrawStatus', `❌ 提取失败: ${error.message}`, 'error');
-  }
-}
+
+    // 刷新所有余额
+    async function refreshBalances() {
+      try {
+        showStatus('withdrawStatus', '正在刷新余额...');
+        
+        const erc20ABI = [
+          "function balanceOf(address) view returns (uint256)",
+          "function allowance(address,address) view returns (uint256)"
+        ];
+        
+        const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, provider);
+        const fggToken = new ethers.Contract(fggTokenAddress, erc20ABI, provider);
+        
+        // 获取合约余额
+        const contractGGGBalance = await gggToken.balanceOf(farmGameAddress);
+        const contractFGGBalance = await fggToken.balanceOf(farmGameAddress);
+        
+        // 获取我的余额
+        let myGGGBalance = "0";
+        let gggAllowance = "0";
+        if (currentAddress) {
+          myGGGBalance = await gggToken.balanceOf(currentAddress);
+          gggAllowance = await gggToken.allowance(farmGameAddress, currentAddress);
+        }
+        
+        // 更新显示
+        document.getElementById('contractGGGBalance').textContent = 
+          ethers.utils.formatUnits(contractGGGBalance, 18);
+        document.getElementById('contractFGGBalance').textContent = 
+          ethers.utils.formatUnits(contractFGGBalance, 18);
+        document.getElementById('myGGGBalance').textContent = 
+          ethers.utils.formatUnits(myGGGBalance, 18);
+        document.getElementById('gggAllowance').textContent = 
+          ethers.utils.formatUnits(gggAllowance, 18);
+          
+        showStatus('withdrawStatus', '✓ 余额刷新成功', 'success');
+      } catch (error) {
+        console.error("刷新余额失败:", error);
+        showStatus('withdrawStatus', `❌ 刷新失败: ${error.message}`, 'error');
+      }
+    }
+
+    // 链上验证GGG余额
+    async function verifyGGGBalance() {
+      try {
+        showStatus('withdrawStatus', '正在从链上验证GGG余额...');
+        
+        const erc20ABI = ["function balanceOf(address) view returns (uint256)"];
+        const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, provider);
+        
+        const balance = await gggToken.balanceOf(farmGameAddress);
+        const formattedBalance = ethers.utils.formatUnits(balance, 18);
+        
+        showStatus('withdrawStatus', `✓ 链上验证成功，合约GGG余额: ${formattedBalance}`, 'success');
+        document.getElementById('contractGGGBalance').textContent = formattedBalance;
+      } catch (error) {
+        console.error("验证GGG余额失败:", error);
+        showStatus('withdrawStatus', `❌ 验证失败: ${error.message}`, 'error');
+      }
+    }
 
     // 显示状态信息
     function showStatus(elementId, message, type = '') {
