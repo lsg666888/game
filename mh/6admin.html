@@ -85,7 +85,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>农场游戏管理员面板</h1>
+    <h1>222农场游戏管理员面板</h1>
     <p>Conflux eSpace 链管理界面</p>
   </div>
 
@@ -453,99 +453,29 @@
       }
     }
 
-    // 提取GGG
-    // 提取GGG - 完整修复版本
-async function withdrawGGG() {
-  try {
-    const amountInput = document.getElementById('gggAmount');
-    const amount = amountInput.value;
-    
-    // 验证输入
-    if (!amount || isNaN(amount) {
-      throw new Error("请输入有效的提取数量");
-    }
-    
-    // 检查所有者权限
-    const isOwner = await checkIsOwner();
-    if (!isOwner) {
-      throw new Error("只有合约所有者可以执行此操作");
-    }
-    
-    showStatus('withdrawStatus', '正在检查合约余额...');
-    
-    // GGG代币ABI (只需要balanceOf方法)
-    const erc20ABI = [
-      {
-        "constant": true,
-        "inputs": [{"name": "_owner", "type": "address"}],
-        "name": "balanceOf",
-        "outputs": [{"name": "balance", "type": "uint256"}],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-      }
-    ];
-    
-    // 创建GGG代币合约实例
-    const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, signer);
-    
-    // 获取合约中的GGG余额
-    const contractBalance = await gggToken.balanceOf(farmGameAddress);
-    const amountToWithdraw = ethers.utils.parseUnits(amount, 18);
-    
-    // 检查余额是否足够
-    if (amountToWithdraw.gt(contractBalance)) {
-      const formattedBalance = ethers.utils.formatUnits(contractBalance, 18);
-      throw new Error(`合约GGG余额不足。当前余额: ${formattedBalance} GGG`);
-    }
-    
-    showStatus('withdrawStatus', '发送提取交易...');
-    
-    // 发送提取交易
-    const tx = await farmGameContract.withdrawGGG(
-      amountToWithdraw,
-      { gasLimit: 1000000 }  // 增加gas限制
-    ).catch(error => {
-      // 解析revert原因
-      if (error.data && error.data.message) {
-        throw new Error(`合约拒绝交易: ${error.data.message}`);
-      } else if (error.reason) {
-        throw new Error(`交易失败: ${error.reason}`);
-      } else {
-        throw new Error(`交易发送失败: ${error.message}`);
-      }
-    });
-    
-    showStatus('withdrawStatus', '交易已发送，等待确认... (可能需要几分钟)');
-    
-    // 等待交易确认
-    const receipt = await tx.wait();
-    
-    // 检查交易状态
-    if (receipt.status === 0) {
-      // 尝试获取revert原因
+ // 提取GGG
+    async function withdrawGGG() {
       try {
-        const code = await provider.call({
-          to: tx.to,
-          data: tx.data
-        }, tx.blockNumber);
-        const reason = ethers.utils.toUtf8String("0x" + code.substr(138));
-        throw new Error(`交易执行失败: ${reason}`);
-      } catch (decodeError) {
-        throw new Error("交易执行失败，原因未知");
+        const amount = document.getElementById('gggAmount').value;
+        if (!amount) throw new Error("请输入提取数量");
+        
+        if (!await checkIsOwner()) {
+          throw new Error("只有合约所有者可以执行此操作");
+        }
+        
+        showStatus('withdrawStatus', '交易发送中...');
+        
+        const tx = await farmGameContract.withdrawGGG(
+          ethers.utils.parseUnits(amount, 18)
+        );
+        
+        await tx.wait();
+        showStatus('withdrawStatus', '✓ GGG提取成功', 'success');
+      } catch (error) {
+        console.error("提取GGG错误:", error);
+        showStatus('withdrawStatus', `提取失败: ${error.message}`, 'error');
       }
     }
-    
-    showStatus('withdrawStatus', `✓ 成功提取 ${amount} GGG`, 'success');
-    
-    // 清空输入框
-    amountInput.value = '';
-    
-  } catch (error) {
-    console.error("提取GGG错误:", error);
-    showStatus('withdrawStatus', `❌ 提取失败: ${error.message}`, 'error');
-  }
-}
 
     // 提取FGG
 // 提取FGG - 修复版本
