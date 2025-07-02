@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>666农场游戏盲盒</title>
+    <title>农场游戏盲盒</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
 </head>
@@ -221,15 +221,27 @@
                 "type": "function"
             }
             // 添加allowance方法
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "spender", "type": "address"}
-                ],
-                "name": "allowance",
-                "outputs": [{"internalType": "uint256", "name": "needed", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
+{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "allowance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientAllowance",
+		"type": "error"
+	},
         ];
 
         // 精简后的FGGToken合约ABI
