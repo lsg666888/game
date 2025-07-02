@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2管理员管理页面</title>
+  <title>管理员管理页面</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <style>
     body {
@@ -963,14 +963,48 @@
 	}
 ];
 
+    // Conflux 网络配置
+    const confluxChainId = 1; // Conflux 主网 Chain ID
+    const confluxRpcUrl = "https://mainnet-rpc.confluxnetwork.org"; // Conflux RPC URL
+    const confluxScanUrl = "https://confluxscan.io/"; // Conflux 浏览器 URL
+
     // 连接钱包并初始化合约
     async function connectWallet() {
       if (window.ethereum || window.conflux) {
         if (window.ethereum) {
+          // 如果是 MetaMask 钱包
           provider = new ethers.providers.Web3Provider(window.ethereum);
-          await window.ethereum.request({ method: 'eth_requestAccounts' }); // MetaMask 钱包
+          
+          // 自动切换到 Conflux 网络
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [
+                {
+                  chainId: `0x${confluxChainId.toString(16)}`, // Conflux 主网的 16 进制 Chain ID
+                  chainName: 'Conflux Network',
+                  nativeCurrency: {
+                    name: 'Conflux Token',
+                    symbol: 'CFX',
+                    decimals: 18
+                  },
+                  rpcUrls: [confluxRpcUrl],
+                  blockExplorerUrls: [confluxScanUrl]
+                }
+              ]
+            });
+            alert("Conflux 网络已添加。请确保切换到 Conflux 网络。");
+          } catch (error) {
+            console.error("自动切换网络失败", error);
+            alert("请手动切换到 Conflux 网络！");
+          }
+
+          // 请求用户连接 MetaMask
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          provider = new ethers.providers.Web3Provider(window.ethereum);
         } else if (window.conflux) {
-          provider = new conflux.Provider({ chainId: 1 }); // TokenPocket
+          // 如果是 TokenPocket 钱包
+          provider = new conflux.Provider({ chainId: confluxChainId, rpcUrl: confluxRpcUrl });
         } else {
           alert("没有检测到支持的钱包，安装 MetaMask 或 TokenPocket！");
           return;
