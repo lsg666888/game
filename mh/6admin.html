@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3农场游戏管理员面板</title>
+  <title>农场游戏管理员面板</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
   <style>
     body {
@@ -85,7 +85,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>农场游戏管理员面板</h1>
+    <h1>8农场游戏管理员面板</h1>
     <p>Conflux eSpace 链管理界面</p>
   </div>
 
@@ -155,15 +155,18 @@
     <p><strong>FarmGame合约地址:</strong> <span id="farmGameAddress">0xc8De5C417a708a5B3ad2508eca4e93004fa2246c</span></p>
     <p><strong>GGG代币地址:</strong> <span id="gggTokenAddress">0x2de53b9a3282eeab1392d8ec4e33d5784e54850b</span></p>
     <p><strong>FGG代币地址:</strong> <span id="fggTokenAddress">0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9</span></p>
-    <p><strong>网络:</strong> Conflux eSpace (链ID: 1030)</p>
+    <p><strong>网络:</strong> Conflux eSpace</p>
   </div>
 
   <script>
     // 合约地址
     const farmGameAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c";
-    
-    // Conflux专用配置
-    let confluxProvider = null;
+    const gggTokenAddress = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b";
+    const fggTokenAddress = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9";
+
+    // 连接到Conflux eSpace网络
+    const provider = new ethers.providers.JsonRpcProvider("https://evm.confluxrpc.com");
+    let signer = null;
     let currentAddress = null;
     let farmGameContract = null;
 
@@ -171,52 +174,67 @@
     window.addEventListener('load', async () => {
       document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
       
-      // 检测Conflux钱包
-      if (window.conflux) {
+      // 如果MetaMask已连接，自动连接
+      if (window.ethereum && window.ethereum.selectedAddress) {
         await connectWallet();
-      } else {
-        showStatus('walletStatus', '请安装Conflux Portal钱包', 'error');
       }
     });
 
-    // 连接Conflux钱包
+    // 连接钱包
     async function connectWallet() {
-      try {
-        // 请求账户访问
-        const accounts = await window.conflux.request({ method: 'cfx_requestAccounts' });
-        if (accounts.length === 0) {
-          throw new Error('请解锁钱包并选择账户');
+      if (window.ethereum) {
+        try {
+          // 请求账户访问
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts.length === 0) {
+            throw new Error('请解锁钱包并选择账户');
+          }
+          
+          signer = provider.getSigner(accounts[0]);
+          currentAddress = await signer.getAddress();
+          
+          // 更新UI显示
+          document.getElementById('walletAddress').textContent = 
+            `已连接钱包: ${currentAddress.substring(0, 6)}...${currentAddress.substring(currentAddress.length - 4)}`;
+          
+          // 初始化合约实例
+          farmGameContract = await getFarmGameContract();
+          
+          // 检查是否是所有者
+          const isOwner = await checkIsOwner();
+          if (!isOwner) {
+            showStatus('walletStatus', '警告: 当前钱包不是合约所有者', 'error');
+          } else {
+            showStatus('walletStatus', '✓ 已连接 (合约所有者)', 'success');
+            // 加载当前盲盒价格
+            loadCurrentBlindBoxPrice();
+          }
+          
+          // 监听账户变化
+          window.ethereum.on('accountsChanged', (newAccounts) => {
+            if (newAccounts.length === 0) {
+              // 钱包已锁定
+              signer = null;
+              currentAddress = null;
+              document.getElementById('walletAddress').textContent = '未连接钱包';
+              showStatus('walletStatus', '钱包已断开连接', 'error');
+            } else {
+              // 切换了账户
+              location.reload(); // 简单处理: 刷新页面
+            }
+          });
+          
+        } catch (error) {
+          console.error('钱包连接错误:', error);
+          showStatus('walletStatus', `连接失败: ${error.message}`, 'error');
         }
-        
-        // 初始化Conflux provider
-        confluxProvider = new ethers.providers.Web3Provider(window.conflux);
-        currentAddress = accounts[0];
-        
-        // 更新UI显示
-        document.getElementById('walletAddress').textContent = 
-          `已连接钱包: ${currentAddress.substring(0, 6)}...${currentAddress.substring(currentAddress.length - 4)}`;
-        
-        // 初始化合约实例
-        farmGameContract = getFarmGameContract();
-        
-        // 检查是否是所有者
-        const isOwner = await checkIsOwner();
-        if (!isOwner) {
-          showStatus('walletStatus', '警告: 当前钱包不是合约所有者', 'error');
-        } else {
-          showStatus('walletStatus', '✓ 已连接 (合约所有者)', 'success');
-          // 加载当前盲盒价格
-          loadCurrentBlindBoxPrice();
-        }
-        
-      } catch (error) {
-        console.error('钱包连接错误:', error);
-        showStatus('walletStatus', `连接失败: ${error.message}`, 'error');
+      } else {
+        showStatus('walletStatus', '请安装MetaMask或Conflux钱包', 'error');
       }
     }
 
     // 获取FarmGame合约实例
-    function getFarmGameContract() {
+    async function getFarmGameContract() {
       const farmGameABI = [
         // 合约所有者
         {
@@ -270,20 +288,32 @@
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
+        },
+        // GGG代币地址
+        {
+          "inputs": [],
+          "name": "gggToken",
+          "outputs": [{"internalType": "contract GGGToken", "name": "", "type": "address"}],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        // FGG代币地址
+        {
+          "inputs": [],
+          "name": "fggToken",
+          "outputs": [{"internalType": "contract FGGToken", "name": "", "type": "address"}],
+          "stateMutability": "view",
+          "type": "function"
         }
       ];
-      return new ethers.Contract(farmGameAddress, farmGameABI, confluxProvider.getSigner());
+      return new ethers.Contract(farmGameAddress, farmGameABI, signer);
     }
 
     // 检查是否是合约所有者
     async function checkIsOwner() {
-      try {
-        const owner = await farmGameContract.owner();
-        return owner.toLowerCase() === currentAddress.toLowerCase();
-      } catch (error) {
-        console.error("检查所有者失败:", error);
-        return false;
-      }
+      if (!farmGameContract) return false;
+      const owner = await farmGameContract.owner();
+      return owner.toLowerCase() === currentAddress.toLowerCase();
     }
 
     // 加载当前盲盒价格
@@ -294,24 +324,6 @@
       } catch (error) {
         console.error("获取盲盒价格失败:", error);
       }
-    }
-
-    // Conflux原生交易发送方法
-    async function sendConfluxTransaction(contract, methodName, args) {
-      const txData = contract.interface.encodeFunctionData(methodName, args);
-      
-      const txHash = await window.conflux.request({
-        method: 'cfx_sendTransaction',
-        params: [{
-          from: currentAddress,
-          to: contract.address,
-          data: txData,
-          gas: ethers.utils.hexlify(300000),
-          storageLimit: ethers.utils.hexlify(1024) // Conflux特有参数
-        }]
-      });
-      
-      return confluxProvider.waitForTransaction(txHash);
     }
 
     // 设置盲盒价格
@@ -326,17 +338,12 @@
         
         showStatus('blindBoxStatus', '交易发送中...');
         
-        const receipt = await sendConfluxTransaction(
-          farmGameContract,
-          "setBlindBoxPrice",
-          [ethers.utils.parseUnits(newPrice, 18)]
+        const tx = await farmGameContract.setBlindBoxPrice(
+          ethers.utils.parseUnits(newPrice, 18)
         );
         
-        if (receipt.status === 1) {
-          showStatus('blindBoxStatus', '✓ 盲盒价格设置成功', 'success');
-        } else {
-          throw new Error("交易失败");
-        }
+        await tx.wait();
+        showStatus('blindBoxStatus', '✓ 盲盒价格设置成功', 'success');
       } catch (error) {
         console.error("设置盲盒价格错误:", error);
         showStatus('blindBoxStatus', `设置失败: ${error.message}`, 'error');
@@ -361,22 +368,15 @@
         
         showStatus('nftConfigStatus', '交易发送中...');
         
-        const receipt = await sendConfluxTransaction(
-          farmGameContract,
-          "setNFTConfig",
-          [
-            nftType,
-            ethers.utils.parseUnits(productionRate, 18),
-            ethers.utils.parseUnits(feedRequirement, 18),
-            imageURI
-          ]
+        const tx = await farmGameContract.setNFTConfig(
+          nftType,
+          ethers.utils.parseUnits(productionRate, 18),
+          ethers.utils.parseUnits(feedRequirement, 18),
+          imageURI
         );
         
-        if (receipt.status === 1) {
-          showStatus('nftConfigStatus', '✓ NFT配置已更新', 'success');
-        } else {
-          throw new Error("交易失败");
-        }
+        await tx.wait();
+        showStatus('nftConfigStatus', '✓ NFT配置已更新', 'success');
       } catch (error) {
         console.error("设置NFT配置错误:", error);
         showStatus('nftConfigStatus', `设置失败: ${error.message}`, 'error');
@@ -395,17 +395,12 @@
         
         showStatus('withdrawStatus', '交易发送中...');
         
-        const receipt = await sendConfluxTransaction(
-          farmGameContract,
-          "withdrawGGG",
-          [ethers.utils.parseUnits(amount, 18)]
+        const tx = await farmGameContract.withdrawGGG(
+          ethers.utils.parseUnits(amount, 18)
         );
         
-        if (receipt.status === 1) {
-          showStatus('withdrawStatus', '✓ GGG提取成功', 'success');
-        } else {
-          throw new Error("交易失败");
-        }
+        await tx.wait();
+        showStatus('withdrawStatus', '✓ GGG提取成功', 'success');
       } catch (error) {
         console.error("提取GGG错误:", error);
         showStatus('withdrawStatus', `提取失败: ${error.message}`, 'error');
@@ -424,17 +419,12 @@
         
         showStatus('withdrawStatus', '交易发送中...');
         
-        const receipt = await sendConfluxTransaction(
-          farmGameContract,
-          "withdrawFGG",
-          [ethers.utils.parseUnits(amount, 18)]
+        const tx = await farmGameContract.withdrawFGG(
+          ethers.utils.parseUnits(amount, 18)
         );
         
-        if (receipt.status === 1) {
-          showStatus('withdrawStatus', '✓ FGG提取成功', 'success');
-        } else {
-          throw new Error("交易失败");
-        }
+        await tx.wait();
+        showStatus('withdrawStatus', '✓ FGG提取成功', 'success');
       } catch (error) {
         console.error("提取FGG错误:", error);
         showStatus('withdrawStatus', `提取失败: ${error.message}`, 'error');
