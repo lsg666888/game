@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1农场游戏盲盒</title>
+    <title>农场游戏盲盒</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -508,7 +508,7 @@
     <div class="container">
         <header>
             <div class="logo">FarmGame</div>
-            <div class="subtitle">收集、养殖、收获无限乐趣</div>
+            <div class="subtitle">L收集、养殖、收获无限乐趣</div>
         </header>
         
         <div class="wallet-status" id="wallet-status">
@@ -612,111 +612,113 @@
         let ownedNFTs = [];
         let currentTokenId = null;
         
-        // 精简后的合约ABI
-        const farmGameABI = [
-            // 余额查询
-            {
-                "inputs": [{"internalType": "address", "name": "owner", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            // 获取用户NFT ID
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "owner", "type": "address"},
-                    {"internalType": "uint256", "name": "index", "type": "uint256"}
-                ],
-                "name": "tokenOfOwnerByIndex",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            // 获取NFT元数据
-            {
-                "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
-                "name": "tokenURI",
-                "outputs": [{"internalType": "string", "name": "", "type": "string"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            // 获取NFT信息
-            {
-                "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "name": "nftInfos",
-                "outputs": [
-                    {"internalType": "enum FarmGame.NFTType", "name": "nftType", "type": "uint8"},
-                    {"internalType": "uint256", "name": "lastHarvestTime", "type": "uint256"},
-                    {"internalType": "uint256", "name": "lastFeedTime", "type": "uint256"},
-                    {"internalType": "bool", "name": "isOpened", "type": "bool"}
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            // 获取盲盒价格
-            {
-                "inputs": [],
-                "name": "blindBoxPrice",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            // 购买盲盒
-            {
-                "inputs": [],
-                "name": "purchaseBlindBox",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            // 开启盲盒
-            {
-                "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
-                "name": "openBlindBox",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
+        // 合约ABI和地址
+// 精简后的FarmGame合约ABI
+const farmGameABI = [
+    // 获取用户NFT余额
+    {
+        "inputs": [{"internalType": "address", "name": "owner", "type": "address"}],
+        "name": "balanceOf",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    // 获取用户拥有的NFT ID
+    {
+        "inputs": [
+            {"internalType": "address", "name": "owner", "type": "address"},
+            {"internalType": "uint256", "name": "index", "type": "uint256"}
+        ],
+        "name": "tokenOfOwnerByIndex",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    // 获取NFT元数据URI
+    {
+        "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
+        "name": "tokenURI",
+        "outputs": [{"internalType": "string", "name": "", "type": "string"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    // 获取NFT详细信息
+    {
+        "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "name": "nftInfos",
+        "outputs": [
+            {"internalType": "enum FarmGame.NFTType", "name": "nftType", "type": "uint8"},
+            {"internalType": "uint256", "name": "lastHarvestTime", "type": "uint256"},
+            {"internalType": "uint256", "name": "lastFeedTime", "type": "uint256"},
+            {"internalType": "bool", "name": "isOpened", "type": "bool"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    // 获取盲盒价格
+    {
+        "inputs": [],
+        "name": "blindBoxPrice",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    // 购买盲盒
+    {
+        "inputs": [],
+        "name": "purchaseBlindBox",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    // 开启盲盒
+    {
+        "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
+        "name": "openBlindBox",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+];
 
-        const gggTokenABI = [
-            // 余额查询
-            {
-                "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            // 授权
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "spender", "type": "address"},
-                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
-                ],
-                "name": "approve",
-                "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
+// 精简后的GGGToken合约ABI
+const gggTokenABI = [
+    // 查询余额
+    {
+        "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
+        "name": "balanceOf",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    // 授权代币
+    {
+        "inputs": [
+            {"internalType": "address", "name": "spender", "type": "address"},
+            {"internalType": "uint256", "name": "amount", "type": "uint256"}
+        ],
+        "name": "approve",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+];
 
-        const fggTokenABI = [
-            // 余额查询
-            {
-                "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
+// 精简后的FGGToken合约ABI
+const fggTokenABI = [
+    // 查询余额
+    {
+        "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
+        "name": "balanceOf",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+    }
+];
         
-        // 合约地址 - 请确保这些地址是正确的
-        const farmGameAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c";
-        const gggTokenAddress = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b";
-        const fggTokenAddress = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9";
+        const farmGameAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c"; // 填入FarmGame合约地址
+        const gggTokenAddress = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b"; // 填入GGGToken合约地址
+        const fggTokenAddress = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9"; // 填入FGGToken合约地址
         
         // NFT类型配置
         const nftTypes = {
@@ -777,13 +779,6 @@
                 try {
                     // 请求账户访问
                     accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    
-                    // 检查网络ID (这里假设是本地测试网络1337，根据实际情况修改)
-                    const chainId = await web3.eth.getChainId();
-                    if (chainId !== 1337) { // 如果不是本地测试网络
-                        showStatus('error', '请连接到正确的网络');
-                        return;
-                    }
                     
                     // 初始化合约
                     farmGameContract = new web3.eth.Contract(farmGameABI, farmGameAddress);
@@ -855,46 +850,41 @@
         
         // 加载用户拥有的NFT
         async function loadOwnedNFTs() {
-            try {
-                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
-                ownedNFTs = [];
+            const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
+            ownedNFTs = [];
+            
+            const nftGrid = document.getElementById('nft-grid');
+            nftGrid.innerHTML = '';
+            
+            for (let i = 0; i < balance; i++) {
+                const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
+                const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
                 
-                const nftGrid = document.getElementById('nft-grid');
-                nftGrid.innerHTML = '';
+                // 解析tokenURI获取图像
+                const metadata = JSON.parse(atob(tokenURI.split(',')[1]));
                 
-                for (let i = 0; i < balance; i++) {
-                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
-                    const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
-                    const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
-                    
-                    // 解析tokenURI获取图像
-                    const metadata = JSON.parse(atob(tokenURI.split(',')[1]));
-                    
-                    ownedNFTs.push({
-                        tokenId: tokenId,
-                        type: nftInfo.nftType,
-                        isOpened: nftInfo.isOpened,
-                        image: metadata.image,
-                        name: metadata.name
-                    });
-                    
-                    // 创建NFT卡片
-                    const nftCard = document.createElement('div');
-                    nftCard.className = 'nft-card';
-                    nftCard.innerHTML = `
-                        <img src="${metadata.image}" class="nft-card-image">
-                        <div class="nft-card-name">${metadata.name}</div>
-                        <div class="nft-card-type" style="background-color: ${nftTypes[nftInfo.nftType].color}20; color: ${nftTypes[nftInfo.nftType].color}">
-                            ${nftTypes[nftInfo.nftType].name}
-                        </div>
-                    `;
-                    
-                    nftCard.addEventListener('click', () => viewNFTDetails(tokenId));
-                    nftGrid.appendChild(nftCard);
-                }
-            } catch (error) {
-                console.error("Error loading NFTs:", error);
-                showStatus('error', '加载NFT失败');
+                ownedNFTs.push({
+                    tokenId: tokenId,
+                    type: nftInfo.nftType,
+                    isOpened: nftInfo.isOpened,
+                    image: metadata.image,
+                    name: metadata.name
+                });
+                
+                // 创建NFT卡片
+                const nftCard = document.createElement('div');
+                nftCard.className = 'nft-card';
+                nftCard.innerHTML = `
+                    <img src="${metadata.image}" class="nft-card-image">
+                    <div class="nft-card-name">${metadata.name}</div>
+                    <div class="nft-card-type" style="background-color: ${nftTypes[nftInfo.nftType].color}20; color: ${nftTypes[nftInfo.nftType].color}">
+                        ${nftTypes[nftInfo.nftType].name}
+                    </div>
+                `;
+                
+                nftCard.addEventListener('click', () => viewNFTDetails(tokenId));
+                nftGrid.appendChild(nftCard);
             }
         }
         
