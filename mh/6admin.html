@@ -482,29 +482,103 @@ window.addEventListener('load', refreshBalances);
       }
     }
 
- // 提取GGG
-    async function withdrawGGG() {
-      try {
-        const amount = document.getElementById('gggAmount').value;
-        if (!amount) throw new Error("请输入提取数量");
-        
-        if (!await checkIsOwner()) {
-          throw new Error("只有合约所有者可以执行此操作");
-        }
-        
-        showStatus('withdrawStatus', '交易发送中...');
-        
-        const tx = await farmGameContract.withdrawGGG(
-          ethers.utils.parseUnits(amount, 18)
-        );
-        
-        await tx.wait();
-        showStatus('withdrawStatus', '✓ GGG提取成功', 'success');
-      } catch (error) {
-        console.error("提取GGG错误:", error);
-        showStatus('withdrawStatus', `提取失败: ${error.message}`, 'error');
-      }
+async function withdrawGGG() {
+  try {
+    const amountInput = document.getElementById('gggAmount');
+    const amount = amountInput.value;
+    
+    // 输入验证
+    if (!amount || isNaN(amount)) {
+      throw new Error("请输入有效的GGG数量");
     }
+    
+    // 权限检查
+    if (!await checkIsOwner()) {
+      throw new Error("只有合约所有者可以执行此操作");
+    }
+    
+    showStatus('withdrawStatus', '正在检查合约GGG余额和授权...');
+    
+    // GGG代币ABI
+    const erc20ABI = [
+      "function balanceOf(address) view returns (uint256)",
+      "function allowance(address,address) view returns (uint256)"
+    ];
+    const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, provider);
+    
+    // 检查余额
+    const contractBalance = await gggToken.balanceOf(farmGameAddress);
+    const amountToWithdraw = ethers.utils.parseUnits(amount, 18);
+    
+    if (amountToWithdraw.gt(contractBalance)) {
+      throw new Error(`合约GGG余额不足。当前余额: ${ethers.utils.formatUnits(contractBalance, 18)} GGG`);
+    }
+    
+    // 检查授权额度
+    const allowance = await gggToken.allowance(farmGameAddress, currentAddress);
+    if (amountToWithdraw.gt(allowance)) {
+      throw new Error(`合约未授权足够额度。当前授权: ${ethers.utils.formatUnits(allowance, 18)} GGG`);
+    }
+    
+    showStatus('withdrawStatus', '发送提取交易...');
+    
+    // 执行提取
+    const tx = await farmGameContract.withdrawGGG(
+      amountToWithdraw,
+      { gasLimit: 200000 }  // 适当提高gas限制
+    ).catch(error => {
+      // 解析错误信息
+      const revertReason = error.reason || 
+                         (error.data?.message ? error.data.message.split("reverted:")[1] : "") || 
+                         error.message;
+      throw new Error(`交易被拒绝: ${revertReason}`);
+    });
+    
+    showStatus('withdrawStatus', '交易已发送，等待确认...');
+    
+    const receipt = await tx.wait();
+    if (receipt.status === 0) throw new Error("交易执行失败");
+    
+    showStatus('withdrawStatus', `✓ 成功提取 ${amount} GGG`, 'success');
+    amountInput.value = '';
+    refreshBalances(); // 刷新余额显示
+    
+  } catch (error) {
+    console.error("GGG提取错误:", error);
+    showStatus('withdrawStatus', `❌ 提取失败: ${error.message}`, 'error');
+    
+    // 如果是授权问题，提示解决方法
+    if (error.message.includes("授权")) {
+      const fixBtn = document.createElement("button");
+      fixBtn.textContent = "点击授权合约使用GGG";
+      fixBtn.onclick = approveGGG;
+      fixBtn.style.marginLeft = "10px";
+      document.getElementById('withdrawStatus').appendChild(fixBtn);
+    }
+  }
+}
+
+// GGG授权函数
+async function approveGGG() {
+  try {
+    showStatus('withdrawStatus', '正在授权合约使用GGG...');
+    
+    const erc20ABI = ["function approve(address,uint256) returns (bool)"];
+    const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, signer);
+    
+    const tx = await gggToken.approve(
+      farmGameAddress,
+      ethers.constants.MaxUint256, // 授权最大数量
+      { gasLimit: 100000 }
+    );
+    
+    await tx.wait();
+    showStatus('withdrawStatus', '✓ 授权成功，请重试提取', 'success');
+    
+  } catch (error) {
+    showStatus('withdrawStatus', `❌ 授权失败: ${error.message}`, 'error');
+  }
+}
 
     // 提取FGG
 // 提取FGG - 修复版本
