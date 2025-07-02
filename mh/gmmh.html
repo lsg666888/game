@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>4442农场游戏盲盒</title>
+    <title>农场游戏盲盒</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="logo">442FarmGame</div>
+            <div class="logo">FarmGame</div>
             <div class="subtitle">收集、养殖、收获无限乐趣</div>
         </header>
         
@@ -197,6 +197,17 @@
                 "stateMutability": "nonpayable",
                 "type": "function"
             }
+// 添加allowance方法
+            {
+                "inputs": [
+                    {"internalType": "address", "name": "owner", "type": "address"},
+                    {"internalType": "address", "name": "spender", "type": "address"}
+                ],
+                "name": "allowance",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
         ];
 
         // 精简后的GGGToken合约ABI
@@ -218,17 +229,6 @@
                 "name": "approve",
                 "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
                 "stateMutability": "nonpayable",
-                "type": "function"
-            }
-// 添加allowance方法
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "owner", "type": "address"},
-                    {"internalType": "address", "name": "spender", "type": "address"}
-                ],
-                "name": "allowance",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
                 "type": "function"
             }
         ];
