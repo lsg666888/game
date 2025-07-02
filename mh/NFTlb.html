@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的NFT收藏 - FarmGame</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-     <link href="styles2.css" rel="stylesheet">
+  <link href="styles2.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -46,11 +46,11 @@
                 <i>🖼️</i>我的NFT收藏
             </div>
             <div class="nft-grid" id="nft-grid">
-                <!-- NFT卡片将通过JS动态生成 -->
+                <div class="loading">加载中...</div>
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
     <script>
         // 初始化Web3
@@ -61,9 +61,8 @@
         let accounts = [];
         let ownedNFTs = [];
         
-        // 合约ABI和地址（与之前保持一致）
+        // 合约ABI和地址
         const farmGameABI = [
-            // 获取用户NFT余额
             {
                 "inputs": [{"internalType": "address", "name": "owner", "type": "address"}],
                 "name": "balanceOf",
@@ -71,7 +70,6 @@
                 "stateMutability": "view",
                 "type": "function"
             },
-            // 获取用户拥有的NFT ID
             {
                 "inputs": [
                     {"internalType": "address", "name": "owner", "type": "address"},
@@ -82,7 +80,6 @@
                 "stateMutability": "view",
                 "type": "function"
             },
-            // 获取NFT元数据URI
             {
                 "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
                 "name": "tokenURI",
@@ -90,7 +87,6 @@
                 "stateMutability": "view",
                 "type": "function"
             },
-            // 获取NFT详细信息
             {
                 "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
                 "name": "nftInfos",
@@ -106,7 +102,6 @@
         ];
 
         const gggTokenABI = [
-            // 查询余额
             {
                 "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
                 "name": "balanceOf",
@@ -117,7 +112,6 @@
         ];
 
         const fggTokenABI = [
-            // 查询余额
             {
                 "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
                 "name": "balanceOf",
@@ -149,23 +143,166 @@
                 error: document.querySelector('.wallet-error')
             };
             
-            // 隐藏所有状态
             Object.values(statusElements).forEach(el => el.style.display = 'none');
             
-            // 显示指定状态
             if (type === 'connecting') {
                 statusElements.connecting.style.display = 'flex';
             } else if (type === 'connected') {
                 statusElements.connected.style.display = 'flex';
-                if (message) {
-                    statusElements.connected.innerHTML = `<i>✅</i> ${message}`;
-                }
+                if (message) statusElements.connected.innerHTML = `<i>✅</i> ${message}`;
             } else if (type === 'error') {
                 statusElements.error.style.display = 'flex';
-                if (message) {
-                    document.getElementById('error-message').textContent = message;
-                }
+                if (message) document.getElementById('error-message').textContent = message;
             }
+        }
+        
+        // 创建NFT卡片
+        function createNFTCard(tokenId, metadata, nftInfo) {
+            const nftCard = document.createElement('div');
+            nftCard.className = 'nft-card';
+            
+            const isOpened = nftInfo.isOpened;
+            const displayImage = isOpened ? 
+                (metadata.image || 'https://via.placeholder.com/200?text=NFT+Image') : 
+                'https://raw.githubusercontent.com/lsg666888/token-logo/refs/heads/main/manghe.png';
+            
+            const displayName = isOpened ? 
+                (metadata.name || `NFT #${tokenId}`) : 
+                '未开启盲盒';
+            
+            const typeInfo = nftTypes[nftInfo.nftType] || { name: '未知类型', color: '#666' };
+            
+            nftCard.innerHTML = `
+                <img src="${displayImage}" class="nft-card-image" 
+                     onerror="this.src='https://via.placeholder.com/200?text=Image+Error'">
+                <div class="nft-card-info">
+                    <div class="nft-card-name">${displayName}</div>
+                    <div class="nft-card-type" style="background-color: ${typeInfo.color}20; color: ${typeInfo.color}">
+                        ${isOpened ? typeInfo.name : '神秘盲盒'}
+                    </div>
+                    <div class="nft-id">ID: ${tokenId}</div>
+                </div>
+            `;
+            
+            return nftCard;
+        }
+        
+        // 加载单个NFT
+        async function loadSingleNFT(index) {
+            try {
+                const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], index).call();
+                console.log(`加载NFT ${index}: ${tokenId}`);
+                
+                const [tokenURI, nftInfo] = await Promise.all([
+                    farmGameContract.methods.tokenURI(tokenId).call(),
+                    farmGameContract.methods.nftInfos(tokenId).call()
+                ]);
+                
+                console.log(`NFT ${tokenId} 数据:`, { tokenURI, nftInfo });
+                
+                let metadata;
+                try {
+                    const jsonPart = tokenURI.startsWith('data:application/json;base64,') ? 
+                        tokenURI.split(',')[1] : 
+                        tokenURI;
+                    metadata = JSON.parse(atob(jsonPart));
+                } catch (e) {
+                    console.error('解析metadata失败:', e);
+                    metadata = { 
+                        image: 'https://via.placeholder.com/200?text=Invalid+Metadata',
+                        name: `NFT #${tokenId}`
+                    };
+                }
+                
+                const nftCard = createNFTCard(tokenId, metadata, nftInfo);
+                document.getElementById('nft-grid').appendChild(nftCard);
+                
+                ownedNFTs.push({
+                    tokenId,
+                    type: nftInfo.nftType,
+                    isOpened: nftInfo.isOpened,
+                    image: metadata.image,
+                    name: metadata.name
+                });
+                
+            } catch (error) {
+                console.error(`加载第 ${index} 个NFT失败:`, error);
+            }
+        }
+        
+        // 加载用户拥有的NFT
+        async function loadOwnedNFTs() {
+            const nftGrid = document.getElementById('nft-grid');
+            try {
+                nftGrid.innerHTML = '<div class="loading">加载中...</div>';
+                
+                // 添加延迟防止UI阻塞
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
+                console.log('NFT余额:', balance);
+                
+                if (balance == 0) {
+                    nftGrid.innerHTML = '<div class="empty">您还没有任何NFT</div>';
+                    return;
+                }
+                
+                nftGrid.innerHTML = '';
+                ownedNFTs = [];
+                
+                // 分批加载防止超时
+                const batchSize = 3;
+                for (let i = 0; i < balance; i += batchSize) {
+                    const end = Math.min(i + batchSize, balance);
+                    const batch = [];
+                    
+                    for (let j = i; j < end; j++) {
+                        batch.push(loadSingleNFT(j));
+                    }
+                    
+                    await Promise.all(batch);
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                
+            } catch (error) {
+                console.error('加载NFT失败:', error);
+                nftGrid.innerHTML = `
+                    <div class="error">
+                        加载失败: ${error.message || '未知错误'}<br>
+                        <button class="refresh-btn" onclick="loadOwnedNFTs()">刷新重试</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // 加载用户数据
+        async function loadUserData() {
+            if (!accounts.length) return;
+            
+            try {
+                // 获取代币余额
+                const [gggBalance, fggBalance] = await Promise.all([
+                    gggTokenContract.methods.balanceOf(accounts[0]).call(),
+                    fggTokenContract.methods.balanceOf(accounts[0]).call()
+                ]);
+                
+                document.getElementById('ggg-balance').textContent = web3.utils.fromWei(gggBalance, 'ether');
+                document.getElementById('fgg-balance').textContent = web3.utils.fromWei(fggBalance, 'ether');
+                
+                // 获取用户NFT
+                await loadOwnedNFTs();
+                
+            } catch (error) {
+                console.error("加载用户数据失败:", error);
+                showStatus('error', '加载数据失败');
+            }
+        }
+        
+        // 重置UI状态
+        function resetUI() {
+            document.getElementById('ggg-balance').textContent = '0';
+            document.getElementById('fgg-balance').textContent = '0';
+            document.getElementById('nft-grid').innerHTML = '<div class="loading">加载中...</div>';
         }
         
         // 初始化应用
@@ -177,16 +314,17 @@
                 try {
                     // 请求账户访问
                     accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    console.log('连接账户:', accounts[0]);
                     
                     // 初始化合约
                     farmGameContract = new web3.eth.Contract(farmGameABI, farmGameAddress);
                     gggTokenContract = new web3.eth.Contract(gggTokenABI, gggTokenAddress);
                     fggTokenContract = new web3.eth.Contract(fggTokenABI, fggTokenAddress);
                     
-                    // 加载用户数据
-                    await loadUserData();
+                    // 测试合约调用
+                    await farmGameContract.methods.balanceOf(accounts[0]).call();
                     
-                    // 显示连接成功
+                    await loadUserData();
                     showStatus('connected');
                     
                     // 监听账户变化
@@ -206,112 +344,27 @@
                         window.location.reload();
                     });
                     
+                    // 监听NFT转移事件
+                    farmGameContract.events.Transfer({ 
+                        filter: { to: accounts[0] },
+                        fromBlock: 'latest'
+                    }).on('data', () => {
+                        console.log('检测到新NFT，刷新列表...');
+                        loadOwnedNFTs();
+                    });
+                    
                 } catch (error) {
-                    console.error("User denied account access", error);
-                    showStatus('error', '用户拒绝了钱包访问请求');
+                    console.error("初始化错误:", error);
+                    showStatus('error', error.message || '初始化失败');
                     resetUI();
                 }
             } else {
-                showStatus('error', '请安装MetaMask或其他Web3钱包以使用此应用');
+                showStatus('error', '请安装MetaMask或其他Web3钱包');
                 resetUI();
             }
         }
         
-        // 重置UI状态
-        function resetUI() {
-            document.getElementById('ggg-balance').textContent = '0';
-            document.getElementById('fgg-balance').textContent = '0';
-            document.getElementById('nft-grid').innerHTML = '';
-        }
-        
-        // 加载用户数据
-        async function loadUserData() {
-            if (!accounts.length) return;
-            
-            try {
-                // 获取代币余额
-                const gggBalance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
-                const fggBalance = await fggTokenContract.methods.balanceOf(accounts[0]).call();
-                
-                document.getElementById('ggg-balance').textContent = web3.utils.fromWei(gggBalance, 'ether');
-                document.getElementById('fgg-balance').textContent = web3.utils.fromWei(fggBalance, 'ether');
-                
-                // 获取用户NFT
-                await loadOwnedNFTs();
-                
-            } catch (error) {
-                console.error("Error loading user data:", error);
-                showStatus('error', '加载用户数据失败');
-            }
-        }
-        
-        // 加载用户拥有的NFT
-        async function loadOwnedNFTs() {
-            try {
-                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
-                ownedNFTs = [];
-                
-                const nftGrid = document.getElementById('nft-grid');
-                nftGrid.innerHTML = '';
-                
-                // 并行加载所有NFT数据
-                const nftPromises = [];
-                for (let i = 0; i < balance; i++) {
-                    nftPromises.push(
-                        farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call()
-                            .then(tokenId => Promise.all([
-                                tokenId,
-                                farmGameContract.methods.tokenURI(tokenId).call(),
-                                farmGameContract.methods.nftInfos(tokenId).call()
-                            ])
-                        )
-                    );
-                }
-                
-                const nftData = await Promise.all(nftPromises);
-                
-                nftData.forEach(([tokenId, tokenURI, nftInfo]) => {
-                    const metadata = JSON.parse(atob(tokenURI.split(',')[1]));
-                    ownedNFTs.push({
-                        tokenId: tokenId,
-                        type: nftInfo.nftType,
-                        isOpened: nftInfo.isOpened,
-                        image: metadata.image,
-                        name: metadata.name
-                    });
-                    
-                    // 创建NFT卡片
-                    const nftCard = document.createElement('div');
-                    nftCard.className = 'nft-card';
-                    
-                    // 使用盲盒图片或实际NFT图片
-                    const displayImage = nftInfo.isOpened ? metadata.image : 
-                        'https://raw.githubusercontent.com/lsg666888/token-logo/refs/heads/main/manghe.png';
-                    
-                    const displayName = nftInfo.isOpened ? metadata.name : '未开启盲盒';
-                    const typeName = nftInfo.isOpened ? nftTypes[nftInfo.nftType].name : '神秘盲盒';
-                    const typeColor = nftInfo.isOpened ? nftTypes[nftInfo.nftType].color : '#6c5ce7';
-                    
-                    nftCard.innerHTML = `
-                        <img src="${displayImage}" class="nft-card-image">
-                        <div class="nft-card-info">
-                            <div class="nft-card-name">${displayName}</div>
-                            <div class="nft-card-type" style="background-color: ${typeColor}20; color: ${typeColor}">
-                                ${typeName}
-                            </div>
-                        </div>
-                    `;
-                    
-                    nftGrid.appendChild(nftCard);
-                });
-                
-            } catch (error) {
-                console.error("加载NFT错误:", error);
-                showStatus('error', '加载NFT数据失败');
-            }
-        }
-        
-        // 初始化应用
+        // 页面加载完成后初始化
         window.addEventListener('load', initApp);
     </script>
 </body>
