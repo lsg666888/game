@@ -150,6 +150,35 @@
     <div id="withdrawStatus" class="status"></div>
   </div>
 
+
+<div class="panel">
+  <h2>合约资金监控</h2>
+  <div>
+    <p>GGG余额: <span id="contractGGGBalance">加载中...</span></p>
+    <p>FGG余额: <span id="contractFGGBalance">加载中...</span></p>
+    <button onclick="refreshBalances()">刷新余额</button>
+  </div>
+</div>
+
+<script>
+async function refreshBalances() {
+  const gggToken = new ethers.Contract(gggTokenAddress, ["function balanceOf(address) view returns (uint256)"], provider);
+  const fggToken = new ethers.Contract(fggTokenAddress, ["function balanceOf(address) view returns (uint256)"], provider);
+  
+  const gggBalance = await gggToken.balanceOf(farmGameAddress);
+  const fggBalance = await fggToken.balanceOf(farmGameAddress);
+  
+  document.getElementById('contractGGGBalance').textContent = ethers.utils.formatUnits(gggBalance, 18);
+  document.getElementById('contractFGGBalance').textContent = ethers.utils.formatUnits(fggBalance, 18);
+}
+
+// 页面加载时自动刷新
+window.addEventListener('load', refreshBalances);
+</script>
+
+
+
+  
   <div class="contract-info">
     <h3>合约信息</h3>
     <p><strong>FarmGame合约地址:</strong> <span id="farmGameAddress">0xc8De5C417a708a5B3ad2508eca4e93004fa2246c</span></p>
