@@ -470,17 +470,7 @@ async function purchaseBlindBox() {
 
             // 更新状态为购买成功
             showStatus('connected', '盲盒购买成功！现在可以开启它了。');
-            
-            // 重新加载用户数据
-           // await loadUserData();
-            
-            // 获取最新购买的NFT
-       //     const balanceAfter = await farmGameContract.methods.balanceOf(accounts[0]).call();
-        //    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], balanceAfter - 1).call();
-       //     currentTokenId = tokenId;
-            
-            // 启用开启按钮
-            document.getElementById('open-btn').disabled = false;
+await loadOwnedNFTs();  // 更新盲盒列表
         } else {
             // 交易失败时显示错误消息
             hideTransactionModal();
