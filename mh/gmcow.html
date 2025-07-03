@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmGame - 购买奶牛</title>
+    <style>
+        :root {
+            --primary: #6C5CE7;
+            --secondary: #A29BFE;
+            --dark: #2D3436;
+            --light: #F5F6FA;
+            --success: #00B894;
+            --warning: #FDCB6E;
+            --danger: #E17055;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 0 15px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .wallet-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .wallet-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 20px 0 15px;
+            padding-left: 10px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .cow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .cow-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .cow-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .cow-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        
+        .cow-card h3 {
+            margin: 10px 0;
+            color: #333;
+        }
+        
+        .cow-card p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+        
+        .cow-card .price {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        
+        .cow-card button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+        
+        .cow-card button:hover {
+            background: #5649C7;
+        }
+        
+        .cow-card button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: var(--success);
+        }
+        
+        .notification.error {
+            background-color: var(--danger);
+        }
+        
+        @media (max-width: 600px) {
+            .cow-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <h1>FarmGame - 购买奶牛</h1>
+            <button id="connectWallet" class="wallet-btn">
+                <i>🔗</i> <span>连接钱包</span>
+            </button>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="tab-container">
+            <div class="tab active" data-tab="buyCow">购买奶牛</div>
+            <div class="tab" data-tab="myCows">我的奶牛</div>
+            <div class="tab" data-tab="blindbox">购买盲盒</div>
+        </div>
+        
+        <div id="buyCowTab" class="tab-content active">
+            <h2 class="section-title">选择奶牛类型</h2>
+            <div class="cow-grid">
+                <div class="cow-card">
+                    <img src="https://raw.githubusercontent.com/lsg666888/token-logo/main/tubiao.png" alt="普通奶牛">
+                    <h3>普通奶牛</h3>
+                    <p>每天可产出1 GGG</p>
+                    <p>需要每天喂食1 FGG</p>
+                    <p class="price">价格: 1 ETH</p>
+                    <button onclick="buyCow(0)">购买普通奶牛</button>
+                </div>
+                
+                <div class="cow-card">
+                    <img src="https://raw.githubusercontent.com/lsg666888/token-logo/main/huangjin.png" alt="黄金奶牛">
+                    <h3>黄金奶牛</h3>
+                    <p>每天可产出5 GGG</p>
+                    <p>需要每天喂食5 FGG</p>
+                    <p class="price">价格: 5 ETH</p>
+                    <button onclick="buyCow(1)">购买黄金奶牛</button>
+                </div>
+                
+                <div class="cow-card">
+                    <img src="https://raw.githubusercontent.com/lsg666888/token-logo/main/xiyou.png" alt="稀有奶牛">
+                    <h3>稀有奶牛</h3>
+                    <p>每天可产出10 GGG</p>
+                    <p>需要每天喂食10 FGG</p>
+                    <p class="price">价格: 10 ETH</p>
+                    <button onclick="buyCow(2)">购买稀有奶牛</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="myCowsTab" class="tab-content">
+            <h2 class="section-title">我的奶牛</h2>
+            <div id="cowContainer" class="cow-grid">
+                <!-- 奶牛将通过JavaScript动态加载 -->
+            </div>
+        </div>
+        
+        <div id="blindboxTab" class="tab-content">
+            <h2 class="section-title">购买盲盒</h2>
+            <div style="text-align: center; margin-top: 30px;">
+                <img src="https://raw.githubusercontent.com/lsg666888/token-logo/main/manghe.png" 
+                     alt="Blind Box" 
+                     style="width: 200px; height: 200px; object-fit: contain; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px;">神秘盲盒</h3>
+                <p style="color: #666; margin-bottom: 25px; max-width: 300px; margin-left: auto; margin-right: auto;">
+                    购买神秘盲盒，有机会获得普通奶牛、黄金奶牛或稀有奶牛！
+                </p>
+                <button id="buyBlindbox" class="buy-blindbox-btn">
+                    购买盲盒 <span class="price-tag">100 GGG</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script>
+        // 合约地址和ABI
+        const contractAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c";
+        const contractABI = [...]; // 使用您原有的ABI
+        
+        // 全局变量
+        let web3;
+        let farmGameContract;
+        let accounts = [];
+        
+        // DOM元素
+        const connectWalletBtn = document.getElementById('connectWallet');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const cowContainer = document.getElementById('cowContainer');
+        const notification = document.getElementById('notification');
+        
+        // 初始化应用
+        async function initApp() {
+            if (typeof window.ethereum !== 'undefined') {
+                web3 = new Web3(window.ethereum);
+                try {
+                    // 请求账户访问
+                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    // 初始化合约
+                    farmGameContract = new web3.eth.Contract(contractABI, contractAddress);
+                    
+                    // 更新UI
+                    updateWalletUI();
+                    loadMyCows();
+                    
+                    // 监听账户变化
+                    window.ethereum.on('accountsChanged', (newAccounts) => {
+                        accounts = newAccounts;
+                        updateWalletUI();
+                        loadMyCows();
+                    });
+                    
+                    // 监听链变化
+                    window.ethereum.on('chainChanged', () => {
+                        window.location.reload();
+                    });
+                    
+                } catch (error) {
+                    console.error("User denied account access:", error);
+                    showNotification("连接钱包失败: " + error.message, 'error');
+                }
+            } else {
+                showNotification("请安装MetaMask或其他Web3钱包应用!", 'error');
+            }
+        }
+        
+        // 更新钱包UI
+        function updateWalletUI() {
+            if (accounts.length > 0) {
+                const shortAddress = `${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}`;
+                connectWalletBtn.innerHTML = `<i>🔗</i> <span class="wallet-address">${shortAddress}</span>`;
+            } else {
+                connectWalletBtn.innerHTML = '<i>🔗</i> <span>连接钱包</span>';
+            }
+        }
+        
+        // 购买奶牛
+        async function buyCow(cowType) {
+            if (!farmGameContract || accounts.length === 0) return;
+            
+            try {
+                // 禁用按钮
+                const buttons = document.querySelectorAll('.cow-card button');
+                buttons.forEach(btn => btn.disabled = true);
+                buttons[cowType].innerHTML = '<span class="loading"></span> 处理中...';
+                
+                // 设置价格
+                let price;
+                let cowName;
+                switch(cowType) {
+                    case 0:
+                        price = web3.utils.toWei('1', 'ether');
+                        cowName = '普通奶牛';
+                        break;
+                    case 1:
+                        price = web3.utils.toWei('5', 'ether');
+                        cowName = '黄金奶牛';
+                        break;
+                    case 2:
+                        price = web3.utils.toWei('10', 'ether');
+                        cowName = '稀有奶牛';
+                        break;
+                    default:
+                        throw new Error('未知奶牛类型');
+                }
+                
+                // 调用购买函数
+                await farmGameContract.methods.purchaseBlindBox().send({
+                    from: accounts[0],
+                    value: price
+                });
+                
+                showNotification(`成功购买${cowName}!`, 'success');
+                loadMyCows();
+                
+            } catch (error) {
+                console.error("购买失败:", error);
+                showNotification(`购买失败: ${error.message}`, 'error');
+            } finally {
+                // 重新启用按钮
+                const buttons = document.querySelectorAll('.cow-card button');
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.innerHTML = btn.innerHTML.replace('<span class="loading"></span> 处理中...', `购买${btn.textContent.match(/购买(.*)/)[1]}`);
+                });
+            }
+        }
+        
+        // 加载我的奶牛
+        async function loadMyCows() {
+            if (!farmGameContract || accounts.length === 0) return;
+            
+            try {
+                cowContainer.innerHTML = '<div style="text-align: center; padding: 20px;">加载中...</div>';
+                
+                // 获取用户拥有的NFT数量
+                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
+                
+                if (balance === '0') {
+                    cowContainer.innerHTML = '<div class="empty-state">您还没有任何奶牛</div>';
+                    return;
+                }
+                
+                // 获取所有NFT
+                let cows = [];
+                for (let i = 0; i < balance; i++) {
+                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                    const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
+                    const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
+                    
+                    // 只显示奶牛类型 (0-2)
+                    if (nftInfo.nftType <= 2) {
+                        const json = atob(tokenURI.split(',')[1]);
+                        const data = JSON.parse(json);
+                        
+                        cows.push({
+                            tokenId,
+                            image: data.image,
+                            name: data.name,
+                            type: data.attributes[0].value,
+                            productionRate: data.attributes[1].value,
+                            feedRequirement: data.attributes[2].value,
+                            lastHarvestTime: nftInfo.lastHarvestTime,
+                            lastFeedTime: nftInfo.lastFeedTime
+                        });
+                    }
+                }
+                
+                renderCows(cows);
+                
+            } catch (error) {
+                console.error("加载奶牛失败:", error);
+                cowContainer.innerHTML = '<div class="empty-state">加载奶牛失败</div>';
+            }
+        }
+        
+        // 渲染奶牛列表
+        function renderCows(cows) {
+            cowContainer.innerHTML = '';
+            
+            if (cows.length === 0) {
+                cowContainer.innerHTML = '<div class="empty-state">您还没有任何奶牛</div>';
+                return;
+            }
+            
+            cows.forEach(cow => {
+                const cowCard = document.createElement('div');
+                cowCard.className = 'cow-card';
+                cowCard.innerHTML = `
+                    <img src="${cow.image}" alt="${cow.name}">
+                    <h3>${cow.name}</h3>
+                    <p>类型: ${cow.type}</p>
+                    <p>产出: ${cow.productionRate}</p>
+                    <p>饲料: ${cow.feedRequirement}</p>
+                    <button onclick="harvestCow(${cow.tokenId})">收获</button>
+                `;
+                cowContainer.appendChild(cowCard);
+            });
+        }
+        
+        // 收获奶牛
+        async function harvestCow(tokenId) {
+            if (!farmGameContract || accounts.length === 0) return;
+            
+            try {
+                const button = event.target;
+                button.disabled = true;
+                button.innerHTML = '<span class="loading"></span> 处理中...';
+                
+                await farmGameContract.methods.harvest(tokenId).send({ from: accounts[0] });
+                
+                showNotification('收获成功!', 'success');
+                loadMyCows();
+                
+            } catch (error) {
+                console.error("收获失败:", error);
+                showNotification(`收获失败: ${error.message}`, 'error');
+                button.disabled = false;
+                button.innerHTML = '收获';
+            }
+        }
+        
+        // 显示通知
+        function showNotification(message, type) {
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 切换标签页
+        function switchTab(tabName) {
+            tabs.forEach(tab => {
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            tabContents.forEach(content => {
+                if (content.id === `${tabName}Tab`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+            
+            if (tabName === 'myCows') {
+                loadMyCows();
+            }
+        }
+        
+        // 事件监听
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                switchTab(tab.dataset.tab);
+            });
+        });
+        
+        connectWalletBtn.addEventListener('click', initApp);
+        
+        // 初始化应用
+        initApp();
+    </script>
+</body>
+</html>
