@@ -987,25 +987,38 @@ async function loadNFTs() {
             return;
         }
         
-        // 替代方案：遍历可能的tokenId范围
-        const maxTokenId = 1000; // 设置一个合理的上限
-        const tokenPromises = [];
+        // 添加请求间隔
+        const tokenIds = [];
+        const maxTokenId = 1000;
+        const batchSize = 5; // 每批请求数量
+        const delay = 100; // 每批之间的延迟(ms)
         
-        for (let i = 1; i <= maxTokenId; i++) {
-            tokenPromises.push(
-                farmGameContract.methods.ownerOf(i).call()
-                .then(owner => {
-                    if (owner.toLowerCase() === accounts[0].toLowerCase()) {
-                        return i;
-                    }
-                    return null;
-                })
-                .catch(() => null) // 忽略不存在的tokenId错误
-            );
+        for (let i = 1; i <= maxTokenId; i += batchSize) {
+            const batchPromises = [];
+            
+            // 创建当前批次的请求
+            for (let j = 0; j < batchSize && (i + j) <= maxTokenId; j++) {
+                batchPromises.push(
+                    farmGameContract.methods.ownerOf(i + j).call()
+                    .then(owner => {
+                        if (owner.toLowerCase() === accounts[0].toLowerCase()) {
+                            return i + j;
+                        }
+                        return null;
+                    })
+                    .catch(() => null)
+                );
+            }
+            
+            // 等待当前批次完成
+            const batchResults = await Promise.all(batchPromises);
+            tokenIds.push(...batchResults.filter(id => id !== null));
+            
+            // 如果不是最后一批，添加延迟
+            if (i + batchSize <= maxTokenId) {
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
         }
-        
-        const tokenResults = await Promise.all(tokenPromises);
-        const tokenIds = tokenResults.filter(id => id !== null);
         
         if (tokenIds.length === 0) {
             nftContainer.innerHTML = `
@@ -1018,37 +1031,49 @@ async function loadNFTs() {
             return;
         }
         
-        // 获取每个NFT的详细信息
-        const nftPromises = tokenIds.map(tokenId => {
-            return Promise.all([
-                farmGameContract.methods.tokenURI(tokenId).call(),
-                farmGameContract.methods.nftInfos(tokenId).call()
-            ]).then(([uri, info]) => {
-                // 解析tokenURI
-                const json = atob(uri.split(',')[1]);
-                const data = JSON.parse(json);
-                
-                return {
-                    tokenId,
-                    image: data.image,
-                    name: data.name,
-                    type: data.attributes[0].value,
-                    isOpened: info.isOpened,
-                    nftType: info.nftType,
-                    lastHarvestTime: info.lastHarvestTime,
-                    lastFeedTime: info.lastFeedTime,
-                    productionRate: data.attributes[1].value,
-                    feedRequirement: data.attributes[2].value
-                };
-            });
-        });
+        // 获取NFT详细信息时也添加批处理和延迟
+        const nfts = [];
+        for (let i = 0; i < tokenIds.length; i += batchSize) {
+            const batchPromises = [];
+            
+            for (let j = 0; j < batchSize && (i + j) < tokenIds.length; j++) {
+                const tokenId = tokenIds[i + j];
+                batchPromises.push(
+                    Promise.all([
+                        farmGameContract.methods.tokenURI(tokenId).call(),
+                        farmGameContract.methods.nftInfos(tokenId).call()
+                    ]).then(([uri, info]) => {
+                        const json = atob(uri.split(',')[1]);
+                        const data = JSON.parse(json);
+                        return {
+                            tokenId,
+                            image: data.image,
+                            name: data.name,
+                            type: data.attributes[0].value,
+                            isOpened: info.isOpened,
+                            nftType: info.nftType,
+                            lastHarvestTime: info.lastHarvestTime,
+                            lastFeedTime: info.lastFeedTime,
+                            productionRate: data.attributes[1].value,
+                            feedRequirement: data.attributes[2].value
+                        };
+                    })
+                );
+            }
+            
+            const batchResults = await Promise.all(batchPromises);
+            nfts.push(...batchResults);
+            
+            if (i + batchSize < tokenIds.length) {
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
         
-        nfts = await Promise.all(nftPromises);
-        renderNFTs();
+        renderNFTs(nfts);
         
     } catch (error) {
         console.error("Error loading NFTs:", error);
-        nftContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><div>加载NFT失败1</div></div>';
+        nftContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><div>2加载NFT失败</div></div>';
     }
 }
 
