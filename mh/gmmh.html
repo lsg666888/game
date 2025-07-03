@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>农场游戏盲盒</title>
+    <title>2农场游戏盲盒 - Conflux版</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -484,7 +484,7 @@
     <div class="container">
         <header>
             <div class="logo">1FarmGame</div>
-            <div class="subtitle">收集、养殖、收获无限乐趣</div>
+            <div class="subtitle">Conflux网络版 - 收集、养殖、收获无限乐趣</div>
         </header>
         
         <div class="wallet-status" id="wallet-status">
@@ -593,10 +593,16 @@
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <!-- 使用Conflux官方JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/js-conflux-sdk/dist/js-conflux-sdk.umd.min.js"></script>
     <script>
-        // 初始化Web3
-        let web3;
+        // 初始化Conflux SDK
+        const { Conflux } = jsConfluxSDK;
+        const conflux = new Conflux({
+            url: 'https://main.confluxrpc.com',
+            networkId: 1029, // Conflux主网ID
+        });
+        
         let farmGameContract;
         let gggTokenContract;
         let fggTokenContract;
@@ -604,7 +610,7 @@
         let ownedNFTs = [];
         let currentTokenId = null;
         
-        // 合约ABI和地址
+        // 合约ABI（保持不变）
         const farmGameABI = [
             {
                 "inputs": [{"internalType": "address", "name": "owner", "type": "address"}],
@@ -705,6 +711,7 @@
             }
         ];
         
+        // 替换为您的Conflux合约地址
         const farmGameAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c";
         const gggTokenAddress = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b";
         const fggTokenAddress = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9";
@@ -761,11 +768,11 @@
         // 获取交易失败原因
         async function getTransactionErrorReason(txHash) {
             try {
-                const tx = await web3.eth.getTransaction(txHash);
-                const result = await web3.eth.call(tx, tx.blockNumber);
+                const tx = await conflux.getTransactionByHash(txHash);
+                const result = await conflux.call(tx);
                 
                 if (result.startsWith('0x08c379a0')) {
-                    return web3.utils.toAscii('0x' + result.substr(138));
+                    return conflux.decode('string', '0x' + result.substr(138));
                 }
                 return "未知原因";
             } catch (error) {
@@ -803,24 +810,34 @@
         async function initApp() {
             showStatus('connecting');
             
-            // 检查是否安装MetaMask
-            if (window.ethereum) {
-                web3 = new Web3(window.ethereum);
+            // 检查是否安装Conflux钱包
+            if (window.conflux && window.conflux.isConfluxPortal) {
                 try {
                     // 请求账户访问
-                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    accounts = await window.conflux.enable();
                     
                     // 检查网络
-                    const chainId = await web3.eth.getChainId();
-                    if (chainId !== 56) { // BSC主网chainId为56
-                        showStatus('error', '请切换到Binance Smart Chain主网');
+                    const chainId = await window.conflux.request({ method: 'cfx_chainId' });
+                    if (chainId !== '0x405') { // Conflux主网chainId为0x405(十进制1029)
+                        showStatus('error', '请切换到Conflux主网');
                         return;
                     }
                     
                     // 初始化合约
-                    farmGameContract = new web3.eth.Contract(farmGameABI, farmGameAddress);
-                    gggTokenContract = new web3.eth.Contract(gggTokenABI, gggTokenAddress);
-                    fggTokenContract = new web3.eth.Contract(fggTokenABI, fggTokenAddress);
+                    farmGameContract = conflux.Contract({
+                        abi: farmGameABI,
+                        address: farmGameAddress,
+                    });
+                    
+                    gggTokenContract = conflux.Contract({
+                        abi: gggTokenABI,
+                        address: gggTokenAddress,
+                    });
+                    
+                    fggTokenContract = conflux.Contract({
+                        abi: fggTokenABI,
+                        address: fggTokenAddress,
+                    });
                     
                     // 加载用户数据
                     await loadUserData();
@@ -829,7 +846,7 @@
                     showStatus('connected');
                     
                     // 监听账户变化
-                    window.ethereum.on('accountsChanged', (newAccounts) => {
+                    window.conflux.on('accountsChanged', (newAccounts) => {
                         accounts = newAccounts;
                         if (accounts.length > 0) {
                             showStatus('connected');
@@ -841,7 +858,7 @@
                     });
                     
                     // 监听链变化
-                    window.ethereum.on('chainChanged', () => {
+                    window.conflux.on('chainChanged', () => {
                         window.location.reload();
                     });
                     
@@ -851,7 +868,7 @@
                     resetUI();
                 }
             } else {
-                showStatus('error', '请安装MetaMask或其他Web3钱包以使用此应用');
+                showStatus('error', '请安装Conflux Portal钱包以使用此应用');
                 resetUI();
             }
         }
@@ -871,11 +888,11 @@
             
             try {
                 // 获取代币余额
-                const gggBalance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
-                const fggBalance = await fggTokenContract.methods.balanceOf(accounts[0]).call();
+                const gggBalance = await gggTokenContract.balanceOf(accounts[0]);
+                const fggBalance = await fggTokenContract.balanceOf(accounts[0]);
                 
-                document.getElementById('ggg-balance').textContent = web3.utils.fromWei(gggBalance, 'ether');
-                document.getElementById('fgg-balance').textContent = web3.utils.fromWei(fggBalance, 'ether');
+                document.getElementById('ggg-balance').textContent = conflux.format.hex(gggBalance);
+                document.getElementById('fgg-balance').textContent = conflux.format.hex(fggBalance);
                 
                 // 获取用户NFT
                 await loadOwnedNFTs();
@@ -889,7 +906,7 @@
         // 加载用户拥有的NFT
         async function loadOwnedNFTs() {
             try {
-                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
+                const balance = await farmGameContract.balanceOf(accounts[0]);
                 ownedNFTs = [];
                 
                 const openedGrid = document.getElementById('opened-nft-grid');
@@ -898,9 +915,9 @@
                 unopenedGrid.innerHTML = '';
                 
                 for (let i = 0; i < balance; i++) {
-                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
-                    const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
-                    const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
+                    const tokenId = await farmGameContract.tokenOfOwnerByIndex(accounts[0], i);
+                    const tokenURI = await farmGameContract.tokenURI(tokenId);
+                    const nftInfo = await farmGameContract.nftInfos(tokenId);
                     
                     // 解析tokenURI获取图像
                     const metadata = JSON.parse(atob(tokenURI.split(',')[1]));
@@ -958,9 +975,7 @@
         async function checkAndApproveGGG(price) {
             try {
                 // 检查当前授权额度
-                const allowance = await gggTokenContract.methods
-                    .allowance(accounts[0], farmGameAddress)
-                    .call();
+                const allowance = await gggTokenContract.allowance(accounts[0], farmGameAddress);
                 
                 // 如果已有足够授权，直接返回
                 if (Number(allowance) >= Number(price)) {
@@ -970,15 +985,14 @@
                 // 否则请求授权
                 showTransactionModal('授权GGG', '正在授权GGG代币给游戏合约...');
                 
-                const approveTx = await gggTokenContract.methods
-                    .approve(farmGameAddress, price)
-                    .send({ 
+                const approveTx = await gggTokenContract.approve(farmGameAddress, price)
+                    .sendTransaction({ 
                         from: accounts[0],
                         gas: 200000,
-                        gasPrice: web3.utils.toWei('5', 'gwei')
+                        gasPrice: '0x' + (5e9).toString(16) // 5 Gdrip
                     });
                 
-                if (approveTx.status) {
+                if (approveTx) {
                     hideTransactionModal();
                     return true;
                 } else {
@@ -1002,10 +1016,10 @@
                 showTransactionModal('购买盲盒', '正在处理您的购买请求...');
                 
                 // 获取盲盒价格
-                const price = await farmGameContract.methods.blindBoxPrice().call();
+                const price = await farmGameContract.blindBoxPrice();
                 
                 // 检查余额
-                const balance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
+                const balance = await gggTokenContract.balanceOf(accounts[0]);
                 if (Number(balance) < Number(price)) {
                     hideTransactionModal();
                     showStatus('error', 'GGG余额不足');
@@ -1022,17 +1036,18 @@
                 
                 // 购买盲盒
                 showTransactionModal('购买盲盒', '正在处理您的购买交易...');
-                const purchaseTx = await farmGameContract.methods.purchaseBlindBox().send({ 
-                    from: accounts[0],
-                    gas: 300000,
-                    gasPrice: web3.utils.toWei('5', 'gwei')
-                });
+                const purchaseTx = await farmGameContract.purchaseBlindBox()
+                    .sendTransaction({ 
+                        from: accounts[0],
+                        gas: 300000,
+                        gasPrice: '0x' + (5e9).toString(16) // 5 Gdrip
+                    });
                 
                 // 交易成功后处理
-                if (purchaseTx.status) {
+                if (purchaseTx) {
                     // 获取最新购买的NFT
-                    const balanceAfter = await farmGameContract.methods.balanceOf(accounts[0]).call();
-                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], balanceAfter - 1).call();
+                    const balanceAfter = await farmGameContract.balanceOf(accounts[0]);
+                    const tokenId = await farmGameContract.tokenOfOwnerByIndex(accounts[0], balanceAfter - 1);
                     
                     // 更新UI
                     hideTransactionModal();
@@ -1071,16 +1086,17 @@
                 showTransactionModal('开启盲盒', '正在开启您的盲盒...');
                 
                 // 开启盲盒
-                const openTx = await farmGameContract.methods.openBlindBox(currentTokenId).send({ 
-                    from: accounts[0],
-                    gas: 300000,
-                    gasPrice: web3.utils.toWei('5', 'gwei')
-                });
+                const openTx = await farmGameContract.openBlindBox(currentTokenId)
+                    .sendTransaction({ 
+                        from: accounts[0],
+                        gas: 300000,
+                        gasPrice: '0x' + (5e9).toString(16) // 5 Gdrip
+                    });
                 
-                if (openTx.status) {
+                if (openTx) {
                     // 获取NFT信息
-                    const nftInfo = await farmGameContract.methods.nftInfos(currentTokenId).call();
-                    const tokenURI = await farmGameContract.methods.tokenURI(currentTokenId).call();
+                    const nftInfo = await farmGameContract.nftInfos(currentTokenId);
+                    const tokenURI = await farmGameContract.tokenURI(currentTokenId);
                     const metadata = JSON.parse(atob(tokenURI.split(',')[1]));
                     
                     // 更新盲盒显示
