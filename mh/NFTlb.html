@@ -411,6 +411,28 @@
             font-weight: 600;
         }
         
+        .progress-container {
+            width: 100%;
+            background: #eee;
+            margin: 10px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 12px;
+            padding: 5px;
+            color: #666;
+        }
+        
         @media (max-width: 400px) {
             .nft-grid {
                 grid-template-columns: 1fr;
@@ -436,6 +458,10 @@
         
         <div id="nftsTab" class="tab-content">
             <h2 class="section-title">我的NFT收藏</h2>
+            <div id="progressIndicator" class="progress-container" style="display: none;">
+                <div class="progress-bar"></div>
+                <div class="progress-text">加载中... 0%</div>
+            </div>
             <div id="nftContainer" class="nft-grid">
                 <!-- NFT卡片将通过JavaScript动态生成 -->
             </div>
@@ -444,7 +470,10 @@
         <div id="blindboxTab" class="tab-content" style="display: none;">
             <h2 class="section-title">购买盲盒</h2>
             <div style="text-align: center; margin-top: 30px;">
-                <img src="https://raw.githubusercontent.com/lsg666888/token-logo/refs/heads/main/manghe.png" alt="Blind Box" style="width: 200px; height: 200px; object-fit: contain; margin-bottom: 20px;">
+                <img src="https://raw.githubusercontent.com/lsg666888/token-logo/refs/heads/main/manghe.png" 
+                     onerror="this.src='fallback-blindbox.png'" 
+                     alt="Blind Box" 
+                     style="width: 200px; height: 200px; object-fit: contain; margin-bottom: 20px;">
                 <h3 style="margin-bottom: 15px;">神秘盲盒</h3>
                 <p style="color: #666; margin-bottom: 25px; max-width: 300px; margin-left: auto; margin-right: auto;">
                     购买神秘盲盒，有机会获得普通奶牛、黄金奶牛、稀有奶牛或不同等级的牧场！
