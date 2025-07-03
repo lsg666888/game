@@ -1074,8 +1074,8 @@ async function loadNFTs() {
             return;
         }
         
-        // 分批次加载NFT
-        await loadNFTsInBatches();
+        // 分批次加载NFT，传递 balance 参数
+        await loadNFTsInBatches(balance);
         
     } catch (error) {
         console.error("Error loading NFTs:", error);
@@ -1085,8 +1085,8 @@ async function loadNFTs() {
     }
 }
 
-// 分批次加载NFT
-async function loadNFTsInBatches() {
+// 修改 loadNFTsInBatches 函数接收 balance 参数
+async function loadNFTsInBatches(balance) {
     const BATCH_SIZE = 5;
     const DELAY_MS = 200;
     const MAX_TOKENS = 500;
