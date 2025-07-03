@@ -93,6 +93,44 @@
             margin-right: 8px;
         }
         
+        .wallet-selector {
+            position: relative;
+        }
+        
+        .wallet-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            width: 200px;
+            z-index: 100;
+            display: none;
+        }
+        
+        .wallet-dropdown.active {
+            display: block;
+        }
+        
+        .wallet-option {
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .wallet-option:hover {
+            background: var(--light);
+        }
+        
+        .wallet-option i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
         .balance-container {
             display: flex;
             gap: 15px;
@@ -445,13 +483,25 @@
                 <i class="fas fa-tractor"></i>
                 FarmGame
             </div>
-            <button id="connectWallet" class="wallet-btn">
-                <i class="fas fa-wallet"></i>
-                连接钱包
-            </button>
-            <div id="walletInfo" class="wallet-address" style="display: none;">
-                <i class="fas fa-check-circle"></i>
-                <span id="walletAddress"></span>
+            <div class="wallet-selector">
+                <button id="connectWallet" class="wallet-btn">
+                    <i class="fas fa-wallet"></i>
+                    连接钱包
+                </button>
+                <div id="walletDropdown" class="wallet-dropdown">
+                    <div class="wallet-option" data-wallet="metamask">
+                        <i class="fab fa-ethereum"></i>
+                        MetaMask
+                    </div>
+                    <div class="wallet-option" data-wallet="tokenpocket">
+                        <i class="fas fa-wallet"></i>
+                        TokenPocket
+                    </div>
+                </div>
+                <div id="walletInfo" class="wallet-address" style="display: none;">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="walletAddress"></span>
+                </div>
             </div>
         </header>
         
@@ -541,13 +591,22 @@
         </div>
     </div>
     
+    <!-- 钱包安装提示模态框 -->
+    <div id="walletInstallModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">安装钱包</h2>
+            <p id="walletInstallText" class="modal-text"></p>
+            <button id="installWallet" class="modal-btn">前往安装</button>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@confluxfans/js-conflux-sdk@2.0.7/dist/js-conflux-sdk.umd.min.js"></script>
     <script>
         // 合约地址和ABI
-        const GGG_TOKEN_ADDRESS = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b"; // 替换为实际的GGG代币合约地址
-        const FGG_TOKEN_ADDRESS = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9"; // 替换为实际的FGG代币合约地址
-        const FARM_GAME_ADDRESS = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c"; // 替换为实际的FarmGame合约地址
+const GGG_TOKEN_ADDRESS = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b";
+const FGG_TOKEN_ADDRESS = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9"; 
+const FARM_GAME_ADDRESS = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c";
         
         // 合约ABI (简化版，实际使用时需要完整的ABI)
         const GGG_TOKEN_ABI = [
@@ -589,13 +648,13 @@
         
         // 全局变量
         let web3;
-        let conflux;
         let accounts = [];
         let gggTokenContract;
         let fggTokenContract;
         let farmGameContract;
         let currentOpenTokenId = null;
         let currentHarvestTokenId = null;
+        let selectedWallet = null;
         
         // NFT类型映射
         const NFT_TYPES = {
@@ -609,63 +668,31 @@
         
         // 初始化应用
         async function initApp() {
-            // 检测Conflux Portal是否安装
-            if (typeof window.conflux !== 'undefined') {
-                conflux = new window.conflux.Conflux({
-                    url: 'https://main.confluxrpc.com',
-                    networkId: 1029, // 主网
-                    logger: console
-                });
-                
-                // 设置合约
-                gggTokenContract = conflux.Contract({
-                    abi: GGG_TOKEN_ABI,
-                    address: GGG_TOKEN_ADDRESS
-                });
-                
-                fggTokenContract = conflux.Contract({
-                    abi: FGG_TOKEN_ABI,
-                    address: FGG_TOKEN_ADDRESS
-                });
-                
-                farmGameContract = conflux.Contract({
-                    abi: FARM_GAME_ABI,
-                    address: FARM_GAME_ADDRESS
-                });
-                
-                // 监听账户变化
-                window.conflux.on('accountsChanged', (newAccounts) => {
-                    accounts = newAccounts;
-                    if (accounts.length > 0) {
-                        updateWalletInfo();
-                        loadUserData();
-                    } else {
-                        resetWalletInfo();
-                    }
-                });
-                
-                // 尝试连接钱包
-                try {
-                    accounts = await window.conflux.enable();
-                    if (accounts.length > 0) {
-                        updateWalletInfo();
-                        loadUserData();
-                    }
-                } catch (error) {
-                    console.error("User denied account access", error);
-                }
-            } else {
-                alert("请安装Conflux Portal钱包扩展程序!");
-            }
-            
             // 设置事件监听器
             setupEventListeners();
+            
+            // 检查是否已连接钱包
+            if (localStorage.getItem('walletConnected') === 'true') {
+                const walletType = localStorage.getItem('walletType');
+                if (walletType) {
+                    await connectWallet(walletType);
+                }
+            }
         }
         
         // 设置事件监听器
         function setupEventListeners() {
             // 连接钱包按钮
-            document.getElementById('connectWallet').addEventListener('click', connectWallet);
+            document.getElementById('connectWallet').addEventListener('click', toggleWalletDropdown);
+            
+            // 钱包选项
+            document.querySelectorAll('.wallet-option').forEach(option => {
+                option.addEventListener('click', async () => {
+                    const walletType = option.dataset.wallet;
+                    await connectWallet(walletType);
+                    document.getElementById('walletDropdown').classList.remove('active');
+                });
+            });
             
             // 购买盲盒按钮
             document.getElementById('buyBlindBox').addEventListener('click', purchaseBlindBox);
@@ -702,23 +729,155 @@
             
             // 确认收获
             document.getElementById('confirmHarvest').addEventListener('click', harvestNFT);
+            
+            // 钱包安装模态框
+            document.querySelectorAll('#walletInstallModal .close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('walletInstallModal').classList.remove('active');
+                });
+            });
+            
+            // 安装钱包按钮
+            document.getElementById('installWallet').addEventListener('click', () => {
+                const walletType = document.getElementById('installWallet').dataset.wallet;
+                if (walletType === 'metamask') {
+                    window.open('https://metamask.io/download.html', '_blank');
+                } else if (walletType === 'tokenpocket') {
+                    window.open('https://www.tokenpocket.pro/', '_blank');
+                }
+            });
+        }
+        
+        // 切换钱包下拉菜单
+        function toggleWalletDropdown() {
+            document.getElementById('walletDropdown').classList.toggle('active');
         }
         
         // 连接钱包
-        async function connectWallet() {
-            if (typeof window.conflux !== 'undefined') {
-                try {
-                    accounts = await window.conflux.enable();
+        async function connectWallet(walletType) {
+            try {
+                selectedWallet = walletType;
+                
+                if (walletType === 'metamask') {
+                    await connectMetaMask();
+                } else if (walletType === 'tokenpocket') {
+                    await connectTokenPocket();
+                }
+                
+                // 保存连接状态
+                localStorage.setItem('walletConnected', 'true');
+                localStorage.setItem('walletType', walletType);
+                
+                // 初始化合约
+                await initContracts();
+                
+                // 加载用户数据
+                await loadUserData();
+                
+            } catch (error) {
+                console.error("Error connecting wallet:", error);
+                
+                // 显示钱包安装提示
+                if (error.message.includes('MetaMask') || error.message.includes('TokenPocket')) {
+                    showWalletInstallModal(walletType);
+                } else {
+                    alert("连接钱包失败: " + error.message);
+                }
+            }
+        }
+        
+        // 连接MetaMask
+        async function connectMetaMask() {
+            if (window.ethereum && window.ethereum.isMetaMask) {
+                // 检查是否已授权
+                accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                
+                if (accounts.length === 0) {
+                    // 请求授权
+                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                }
+                
+                // 初始化Web3
+                web3 = new Web3(window.ethereum);
+                
+                // 监听账户变化
+                window.ethereum.on('accountsChanged', (newAccounts) => {
+                    accounts = newAccounts;
                     if (accounts.length > 0) {
                         updateWalletInfo();
                         loadUserData();
+                    } else {
+                        resetWalletInfo();
                     }
-                } catch (error) {
-                    console.error("User denied account access", error);
-                }
+                });
+                
+                // 更新钱包信息
+                updateWalletInfo();
+                
             } else {
-                alert("请安装Conflux Portal钱包扩展程序!");
+                throw new Error('请安装MetaMask钱包扩展程序');
             }
+        }
+        
+        // 连接TokenPocket
+        async function connectTokenPocket() {
+            if (window.tokenpocket && window.tokenpocket.conflux) {
+                // TokenPocket已注入
+                accounts = await window.tokenpocket.conflux.request({ method: 'cfx_accounts' });
+                
+                if (accounts.length === 0) {
+                    // 请求授权
+                    accounts = await window.tokenpocket.conflux.request({ method: 'cfx_requestAccounts' });
+                }
+                
+                // 初始化Web3
+                web3 = new Web3(window.tokenpocket.conflux);
+                
+                // 监听账户变化
+                window.tokenpocket.conflux.on('accountsChanged', (newAccounts) => {
+                    accounts = newAccounts;
+                    if (accounts.length > 0) {
+                        updateWalletInfo();
+                        loadUserData();
+                    } else {
+                        resetWalletInfo();
+                    }
+                });
+                
+                // 更新钱包信息
+                updateWalletInfo();
+                
+            } else {
+                throw new Error('请安装TokenPocket钱包应用');
+            }
+        }
+        
+        // 显示钱包安装提示
+        function showWalletInstallModal(walletType) {
+            const modal = document.getElementById('walletInstallModal');
+            const text = document.getElementById('walletInstallText');
+            const installBtn = document.getElementById('installWallet');
+            
+            if (walletType === 'metamask') {
+                text.textContent = '要使用MetaMask连接，请先安装MetaMask浏览器扩展程序。';
+                installBtn.dataset.wallet = 'metamask';
+                installBtn.textContent = '安装MetaMask';
+            } else if (walletType === 'tokenpocket') {
+                text.textContent = '要使用TokenPocket连接，请先安装TokenPocket移动应用。';
+                installBtn.dataset.wallet = 'tokenpocket';
+                installBtn.textContent = '安装TokenPocket';
+            }
+            
+            modal.classList.add('active');
+        }
+        
+        // 初始化合约
+        async function initContracts() {
+            if (!web3) return;
+            
+            gggTokenContract = new web3.eth.Contract(GGG_TOKEN_ABI, GGG_TOKEN_ADDRESS);
+            fggTokenContract = new web3.eth.Contract(FGG_TOKEN_ABI, FGG_TOKEN_ADDRESS);
+            farmGameContract = new web3.eth.Contract(FARM_GAME_ABI, FARM_GAME_ADDRESS);
         }
         
         // 更新钱包信息
@@ -747,6 +906,10 @@
             document.getElementById('gggBalance').textContent = '0';
             document.getElementById('fggBalance').textContent = '0';
             document.getElementById('nftContainer').innerHTML = '';
+            
+            // 清除本地存储
+            localStorage.removeItem('walletConnected');
+            localStorage.removeItem('walletType');
         }
         
         // 加载用户数据
@@ -763,8 +926,8 @@
         // 加载代币余额
         async function loadTokenBalances() {
             try {
-                const gggBalance = await gggTokenContract.balanceOf(accounts[0]);
-                const fggBalance = await fggTokenContract.balanceOf(accounts[0]);
+                const gggBalance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
+                const fggBalance = await fggTokenContract.methods.balanceOf(accounts[0]).call();
                 
                 document.getElementById('gggBalance').textContent = formatTokenAmount(gggBalance);
                 document.getElementById('fggBalance').textContent = formatTokenAmount(fggBalance);
@@ -781,7 +944,7 @@
         // 加载用户的NFT
         async function loadUserNFTs() {
             try {
-                const balance = await farmGameContract.balanceOf(accounts[0]);
+                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
                 const nftContainer = document.getElementById('nftContainer');
                 nftContainer.innerHTML = '';
                 
@@ -793,7 +956,7 @@
                 // 获取所有NFT的tokenId
                 const tokenIds = [];
                 for (let i = 0; i < balance; i++) {
-                    const tokenId = await farmGameContract.tokenOfOwnerByIndex(accounts[0], i);
+                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
                     tokenIds.push(tokenId);
                 }
                 
@@ -810,8 +973,8 @@
         async function createNFTCard(tokenId) {
             try {
                 // 获取NFT信息
-                const tokenURI = await farmGameContract.tokenURI(tokenId);
-                const nftInfo = await farmGameContract.nftInfos(tokenId);
+                const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
+                const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
                 
                 // 解析tokenURI
                 const response = await fetch(tokenURI);
@@ -852,7 +1015,7 @@
                     `;
                 } else {
                     // 获取收获信息
-                    const [harvestAmount, isGGG] = await farmGameContract.calculateHarvestAmount(tokenId);
+                    const [harvestAmount, isGGG] = await farmGameContract.methods.calculateHarvestAmount(tokenId).call();
                     
                     cardContent += `
                         <div class="nft-stats">
@@ -914,7 +1077,7 @@
                 confirmBtn.innerHTML = '<span class="loading"></span>处理中...';
                 
                 // 调用合约
-                await farmGameContract.openBlindBox(currentOpenTokenId).send({
+                await farmGameContract.methods.openBlindBox(currentOpenTokenId).send({
                     from: accounts[0]
                 });
                 
@@ -940,8 +1103,8 @@
         // 显示盲盒结果
         async function showBlindboxResult(tokenId) {
             try {
-                const nftInfo = await farmGameContract.nftInfos(tokenId);
-                const tokenURI = await farmGameContract.tokenURI(tokenId);
+                const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
+                const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
                 
                 // 解析tokenURI
                 const response = await fetch(tokenURI);
@@ -963,7 +1126,7 @@
             currentHarvestTokenId = tokenId;
             
             try {
-                const [amount, isGGG] = await farmGameContract.calculateHarvestAmount(tokenId);
+                const [amount, isGGG] = await farmGameContract.methods.calculateHarvestAmount(tokenId).call();
                 
                 if (amount === 0) {
                     alert("当前没有可收获的代币");
@@ -992,7 +1155,7 @@
                 confirmBtn.innerHTML = '<span class="loading"></span>处理中...';
                 
                 // 调用合约
-                await farmGameContract.harvest(currentHarvestTokenId).send({
+                await farmGameContract.methods.harvest(currentHarvestTokenId).send({
                     from: accounts[0]
                 });
                 
@@ -1026,7 +1189,7 @@
                 feedBtn.innerHTML = '<span class="loading"></span>处理中...';
                 
                 // 调用合约
-                await farmGameContract.feed(tokenId).send({
+                await farmGameContract.methods.feed(tokenId).send({
                     from: accounts[0]
                 });
                 
@@ -1057,23 +1220,23 @@
                 buyBtn.innerHTML = '<span class="loading"></span>处理中...';
                 
                 // 检查余额
-                const gggBalance = await gggTokenContract.balanceOf(accounts[0]);
-                const blindBoxPrice = await farmGameContract.blindBoxPrice();
+                const gggBalance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
+                const blindBoxPrice = await farmGameContract.methods.blindBoxPrice().call();
                 
                 if (gggBalance < blindBoxPrice) {
                     throw new Error("GGG余额不足");
                 }
                 
                 // 检查授权
-                const allowance = await gggTokenContract.allowance(accounts[0], FARM_GAME_ADDRESS);
+                const allowance = await gggTokenContract.methods.allowance(accounts[0], FARM_GAME_ADDRESS).call();
                 if (allowance < blindBoxPrice) {
-                    await gggTokenContract.approve(FARM_GAME_ADDRESS, blindBoxPrice).send({
+                    await gggTokenContract.methods.approve(FARM_GAME_ADDRESS, blindBoxPrice).send({
                         from: accounts[0]
                     });
                 }
                 
                 // 调用合约
-                await farmGameContract.purchaseBlindBox().send({
+                await farmGameContract.methods.purchaseBlindBox().send({
                     from: accounts[0]
                 });
                 
@@ -1103,7 +1266,7 @@
                 harvestAllBtn.innerHTML = '<span class="loading"></span>处理中...';
                 
                 // 获取所有NFT
-                const balance = await farmGameContract.balanceOf(accounts[0]);
+                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
                 if (balance === 0) {
                     alert("您还没有任何NFT");
                     return;
@@ -1112,11 +1275,11 @@
                 // 获取所有可收获的NFT
                 const tokenIds = [];
                 for (let i = 0; i < balance; i++) {
-                    const tokenId = await farmGameContract.tokenOfOwnerByIndex(accounts[0], i);
-                    const nftInfo = await farmGameContract.nftInfos(tokenId);
+                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                    const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
                     
                     if (nftInfo.isOpened) {
-                        const [amount] = await farmGameContract.calculateHarvestAmount(tokenId);
+                        const [amount] = await farmGameContract.methods.calculateHarvestAmount(tokenId).call();
                         if (amount > 0) {
                             tokenIds.push(tokenId);
                         }
@@ -1131,7 +1294,7 @@
                 // 批量收获
                 for (const tokenId of tokenIds) {
                     try {
-                        await farmGameContract.harvest(tokenId).send({
+                        await farmGameContract.methods.harvest(tokenId).send({
                             from: accounts[0]
                         });
                     } catch (error) {
@@ -1165,7 +1328,7 @@
                 feedAllBtn.innerHTML = '<span class="loading"></span>处理中...';
                 
                 // 获取所有NFT
-                const balance = await farmGameContract.balanceOf(accounts[0]);
+                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
                 if (balance === 0) {
                     alert("您还没有任何NFT");
                     return;
@@ -1174,8 +1337,8 @@
                 // 获取所有需要喂养的NFT
                 const tokenIds = [];
                 for (let i = 0; i < balance; i++) {
-                    const tokenId = await farmGameContract.tokenOfOwnerByIndex(accounts[0], i);
-                    const nftInfo = await farmGameContract.nftInfos(tokenId);
+                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                    const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
                     
                     if (nftInfo.isOpened) {
                         tokenIds.push(tokenId);
@@ -1188,17 +1351,17 @@
                 }
                 
                 // 检查授权
-                const gggAllowance = await gggTokenContract.allowance(accounts[0], FARM_GAME_ADDRESS);
-                const fggAllowance = await fggTokenContract.allowance(accounts[0], FARM_GAME_ADDRESS);
+                const gggAllowance = await gggTokenContract.methods.allowance(accounts[0], FARM_GAME_ADDRESS).call();
+                const fggAllowance = await fggTokenContract.methods.allowance(accounts[0], FARM_GAME_ADDRESS).call();
                 
                 if (gggAllowance === 0) {
-                    await gggTokenContract.approve(FARM_GAME_ADDRESS, ethers.constants.MaxUint256).send({
+                    await gggTokenContract.methods.approve(FARM_GAME_ADDRESS, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff').send({
                         from: accounts[0]
                     });
                 }
                 
                 if (fggAllowance === 0) {
-                    await fggTokenContract.approve(FARM_GAME_ADDRESS, ethers.constants.MaxUint256).send({
+                    await fggTokenContract.methods.approve(FARM_GAME_ADDRESS, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff').send({
                         from: accounts[0]
                     });
                 }
@@ -1206,7 +1369,7 @@
                 // 批量喂养
                 for (const tokenId of tokenIds) {
                     try {
-                        await farmGameContract.feed(tokenId).send({
+                        await farmGameContract.methods.feed(tokenId).send({
                             from: accounts[0]
                         });
                     } catch (error) {
