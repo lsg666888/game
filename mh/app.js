@@ -902,6 +902,7 @@ let web3;
 let farmGameContract;
 let accounts = [];
 let nfts = [];
+let openingAnimation = null;
 
 // DOM元素
 const connectWalletBtn = document.getElementById('connectWallet');
@@ -916,7 +917,218 @@ const nftsTab = document.getElementById('nftsTab');
 const blindboxTab = document.getElementById('blindboxTab');
 const tabs = document.querySelectorAll('.tab');
 const progressIndicator = document.getElementById('progressIndicator');
+const animationContainer = document.createElement('div');
+animationContainer.className = 'animation-container';
+document.body.appendChild(animationContainer);
 
+// 盲盒概率显示
+const blindboxRates = {
+    'CommonCow': '40%',
+    'GoldenCow': '9%',
+    'RareCow': '1%',
+    'BeginnerFarm': '40%',
+    'IntermediateFarm': '9%',
+    'AdvancedFarm': '1%'
+};
+
+// 初始化应用
+async function initApp() {
+    if (typeof window.ethereum !== 'undefined') {
+        web3 = new Web3(window.ethereum);
+        try {
+            // 请求账户访问
+            accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            
+            // 初始化合约
+            farmGameContract = new web3.eth.Contract(contractABI, contractAddress);
+            
+            // 更新UI
+            updateWalletUI();
+            loadNFTs();
+            updateBlindboxInfo(); // 新增：显示盲盒概率
+            
+            // 监听账户变化
+            window.ethereum.on('accountsChanged', (newAccounts) => {
+                accounts = newAccounts;
+                updateWalletUI();
+                nftCache.clear(accounts[0]);
+                loadNFTs();
+            });
+            
+            // 监听链变化
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
+            
+        } catch (error) {
+            console.error("User denied account access or error occurred:", error);
+            showError("连接钱包失败: " + error.message);
+        }
+    } else {
+        showError("请安装MetaMask或其他Web3钱包应用!");
+    }
+}
+
+// 新增：显示盲盒概率信息
+function updateBlindboxInfo() {
+    const infoContainer = document.createElement('div');
+    infoContainer.className = 'rates-container';
+    
+    let html = '<h4>盲盒概率分布</h4><ul class="rates-list">';
+    for (const [type, rate] of Object.entries(blindboxRates)) {
+        html += `<li><span class="nft-type">${type}</span><span class="rate-badge">${rate}</span></li>`;
+    }
+    html += '</ul>';
+    
+    infoContainer.innerHTML = html;
+    blindboxTab.querySelector('.section-title').after(infoContainer);
+}
+
+// 改进的开启盲盒函数
+async function openBlindbox(tokenId) {
+    if (!farmGameContract || accounts.length === 0) return;
+    
+    try {
+        // 禁用所有操作按钮
+        disableAllButtons();
+        
+        // 显示开启动画
+        showOpeningAnimation(tokenId);
+        
+        // 发送交易
+        const receipt = await farmGameContract.methods.openBlindBox(tokenId)
+            .send({ from: accounts[0] });
+        
+        // 从交易日志中获取开启结果
+        const result = getOpenResultFromReceipt(receipt);
+        
+        // 显示结果动画
+        await showResultAnimation(result);
+        
+        // 清除缓存并刷新NFT列表
+        nftCache.clear(accounts[0]);
+        await loadNFTs();
+        
+    } catch (error) {
+        console.error("开启盲盒失败:", error);
+        showError("开启盲盒失败: " + error.message);
+    } finally {
+        // 隐藏动画
+        hideAnimation();
+        // 重新启用按钮
+        enableAllButtons();
+    }
+}
+
+// 新增：显示开启动画
+function showOpeningAnimation(tokenId) {
+    animationContainer.innerHTML = `
+        <div class="animation-overlay">
+            <div class="animation-content">
+                <div class="spinner"></div>
+                <h3>正在开启盲盒 #${tokenId}</h3>
+                <p>随机生成中，请稍候...</p>
+                <div class="shuffling-icons">
+                    ${Array(6).fill().map((_, i) => 
+                        `<img src="https://raw.githubusercontent.com/lsg666888/token-logo/main/${getNFTImageName(i)}" 
+                              alt="shuffling" class="shuffling-icon">`
+                    ).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 添加图标切换动画
+    const icons = animationContainer.querySelectorAll('.shuffling-icon');
+    let counter = 0;
+    openingAnimation = setInterval(() => {
+        icons.forEach(icon => {
+            icon.style.opacity = '0.3';
+        });
+        icons[counter % icons.length].style.opacity = '1';
+        counter++;
+    }, 100);
+}
+
+// 新增：显示结果动画
+async function showResultAnimation(result) {
+    clearInterval(openingAnimation);
+    
+    const nftType = result.nftType;
+    const imageUrl = `https://raw.githubusercontent.com/lsg666888/token-logo/main/${getNFTImageName(nftType)}`;
+    
+    animationContainer.querySelector('.animation-content').innerHTML = `
+        <div class="result-animation">
+            <div class="confetti"></div>
+            <img src="${imageUrl}" alt="NFT" class="result-image">
+            <h3>恭喜获得!</h3>
+            <p class="nft-type-badge">${getNFTTypeName(nftType)}</p>
+            <p class="nft-description">${getNFTDescription(nftType)}</p>
+            <button class="close-animation-btn">确定</button>
+        </div>
+    `;
+    
+    // 添加确定按钮事件
+    animationContainer.querySelector('.close-animation-btn').addEventListener('click', hideAnimation);
+    
+    // 自动关闭动画
+    setTimeout(hideAnimation, 5000);
+}
+
+// 新增：从交易日志中解析开启结果
+function getOpenResultFromReceipt(receipt) {
+    const eventSignature = web3.utils.sha3("BlindBoxOpened(address,uint256,uint8)");
+    const event = receipt.logs.find(log => 
+        log.topics[0] === eventSignature &&
+        log.address.toLowerCase() === contractAddress.toLowerCase()
+    );
+    
+    if (event) {
+        const decoded = web3.eth.abi.decodeLog(
+            [
+                { type: 'address', name: 'owner' },
+                { type: 'uint256', name: 'tokenId' },
+                { type: 'uint8', name: 'nftType' }
+            ],
+            event.data,
+            event.topics.slice(1)
+        );
+        
+        return {
+            owner: decoded.owner,
+            tokenId: decoded.tokenId,
+            nftType: parseInt(decoded.nftType)
+        };
+    }
+    return null;
+}
+
+// 辅助函数：获取NFT类型名称
+function getNFTTypeName(nftType) {
+    const types = [
+        '普通奶牛', '黄金奶牛', '稀有奶牛',
+        '初级牧场', '中级牧场', '高级牧场'
+    ];
+    return types[nftType] || '未知类型';
+}
+
+// 辅助函数：获取NFT描述
+function getNFTDescription(nftType) {
+    const descriptions = [
+        '每天可产出1 GGG', '每天可产出5 GGG', '每天可产出10 GGG',
+        '每天可产出10 FGG', '每天可产出50 FGG', '每天可产出100 FGG'
+    ];
+    return descriptions[nftType] || '';
+}
+
+// 辅助函数：获取NFT图片名称
+function getNFTImageName(nftType) {
+    const images = [
+        'tubiao.png', 'huangjin.png', 'xiyou.png',
+        'chuji.png', 'zhongji.png', 'gaoji.png'
+    ];
+    return images[nftType] || 'manghe.png';
+}
 // 请求队列系统
 class RequestQueue {
     constructor(maxConcurrent = 3, interval = 500) {
