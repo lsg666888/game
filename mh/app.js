@@ -1,5 +1,5 @@
 // 合约地址和ABI
-const contractAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c"; // 替换为你的合约地址
+const contractAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c";
 const contractABI = [
 	{
 		"inputs": [
@@ -895,7 +895,7 @@ const contractABI = [
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}
-]; // 替换为你的合约ABI
+];
 
 // 全局变量
 let web3;
@@ -915,21 +915,97 @@ const modalActions = document.getElementById('modalActions');
 const nftsTab = document.getElementById('nftsTab');
 const blindboxTab = document.getElementById('blindboxTab');
 const tabs = document.querySelectorAll('.tab');
+const progressIndicator = document.getElementById('progressIndicator');
+
+// 请求队列系统
+class RequestQueue {
+    constructor(maxConcurrent = 3, interval = 500) {
+        this.queue = [];
+        this.maxConcurrent = maxConcurrent;
+        this.interval = interval;
+        this.activeCount = 0;
+    }
+    
+    add(requestFn) {
+        return new Promise((resolve, reject) => {
+            this.queue.push({
+                requestFn,
+                resolve,
+                reject
+            });
+            this.processQueue();
+        });
+    }
+    
+    async processQueue() {
+        if (this.activeCount >= this.maxConcurrent || this.queue.length === 0) {
+            return;
+        }
+        
+        this.activeCount++;
+        const { requestFn, resolve, reject } = this.queue.shift();
+        
+        try {
+            const result = await requestFn();
+            resolve(result);
+        } catch (error) {
+            reject(error);
+        } finally {
+            this.activeCount--;
+            setTimeout(() => this.processQueue(), this.interval);
+        }
+    }
+}
+
+// 初始化全局请求队列
+const rpcQueue = new RequestQueue(3, 500);
+
+// 带队列的RPC调用
+async function safeRpcCall(method, ...args) {
+    return rpcQueue.add(() => farmGameContract.methods[method](...args).call());
+}
+
+// 带重试机制的RPC调用
+async function withRetry(fn, retries = 3, delay = 100) {
+    try {
+        return await fn();
+    } catch (error) {
+        if (retries <= 0) throw error;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return withRetry(fn, retries - 1, delay * 2);
+    }
+}
+
+// 缓存系统
+const nftCache = {
+    get: (account) => {
+        const cache = JSON.parse(localStorage.getItem(`nftCache_${account}`)) || {};
+        if (cache.timestamp && Date.now() - cache.timestamp < 5 * 60 * 1000) {
+            return cache.data;
+        }
+        return null;
+    },
+    set: (account, data) => {
+        localStorage.setItem(`nftCache_${account}`, JSON.stringify({
+            timestamp: Date.now(),
+            data
+        }));
+    },
+    clear: (account) => {
+        localStorage.removeItem(`nftCache_${account}`);
+    }
+};
 
 // 初始化应用
 async function initApp() {
-    // 检查是否安装了TokenPocket或其他Web3提供者
-    if (window.ethereum || window.web3) {
+    if (typeof window.ethereum !== 'undefined') {
+        web3 = new Web3(window.ethereum);
         try {
             // 请求账户访问
-            await window.ethereum.request({ method: 'eth_requestAccounts' });
-            web3 = new Web3(window.ethereum);
+            accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             
             // 初始化合约
             farmGameContract = new web3.eth.Contract(contractABI, contractAddress);
-            
-            // 获取账户
-            accounts = await web3.eth.getAccounts();
             
             // 更新UI
             updateWalletUI();
@@ -939,6 +1015,7 @@ async function initApp() {
             window.ethereum.on('accountsChanged', (newAccounts) => {
                 accounts = newAccounts;
                 updateWalletUI();
+                nftCache.clear(accounts[0]);
                 loadNFTs();
             });
             
@@ -948,11 +1025,18 @@ async function initApp() {
             });
             
         } catch (error) {
-            console.error("Error initializing app:", error);
+            console.error("User denied account access or error occurred:", error);
             alert("连接钱包失败: " + error.message);
         }
+    } else if (typeof window.web3 !== 'undefined') {
+        // 传统Web3提供者
+        web3 = new Web3(window.web3.currentProvider);
+        accounts = await web3.eth.getAccounts();
+        farmGameContract = new web3.eth.Contract(contractABI, contractAddress);
+        updateWalletUI();
+        loadNFTs();
     } else {
-        alert("请安装TokenPocket或其他Web3钱包应用!");
+        alert("请安装MetaMask、TokenPocket或其他Web3钱包应用!");
     }
 }
 
@@ -966,129 +1050,152 @@ function updateWalletUI() {
     }
 }
 
-// 加载用户的NFT
+// 加载NFT
 async function loadNFTs() {
     if (!farmGameContract || accounts.length === 0) return;
     
     try {
+        // 检查缓存
+        const cachedNFTs = nftCache.get(accounts[0]);
+        if (cachedNFTs) {
+            renderNFTs(cachedNFTs);
+            return;
+        }
+        
         nftContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">🔄</div><div>加载中...</div></div>';
+        progressIndicator.style.display = 'block';
         
         // 获取用户拥有的NFT数量
-        const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
+        const balance = await withRetry(() => safeRpcCall('balanceOf', accounts[0]));
         
         if (balance === '0') {
-            nftContainer.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">📦</div>
-                    <div class="empty-text">你还没有任何NFT</div>
-                    <button class="buy-blindbox-btn" onclick="switchTab('blindbox')">购买盲盒</button>
-                </div>
-            `;
+            showEmptyState();
+            progressIndicator.style.display = 'none';
             return;
         }
         
-        // 添加请求间隔
-        const tokenIds = [];
-        const maxTokenId = 1000;
-        const batchSize = 5; // 每批请求数量
-        const delay = 100; // 每批之间的延迟(ms)
-        
-        for (let i = 1; i <= maxTokenId; i += batchSize) {
-            const batchPromises = [];
-            
-            // 创建当前批次的请求
-            for (let j = 0; j < batchSize && (i + j) <= maxTokenId; j++) {
-                batchPromises.push(
-                    farmGameContract.methods.ownerOf(i + j).call()
-                    .then(owner => {
-                        if (owner.toLowerCase() === accounts[0].toLowerCase()) {
-                            return i + j;
-                        }
-                        return null;
-                    })
-                    .catch(() => null)
-                );
-            }
-            
-            // 等待当前批次完成
-            const batchResults = await Promise.all(batchPromises);
-            tokenIds.push(...batchResults.filter(id => id !== null));
-            
-            // 如果不是最后一批，添加延迟
-            if (i + batchSize <= maxTokenId) {
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
-        }
-        
-        if (tokenIds.length === 0) {
-            nftContainer.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">📦</div>
-                    <div class="empty-text">你还没有任何NFT</div>
-                    <button class="buy-blindbox-btn" onclick="switchTab('blindbox')">购买盲盒</button>
-                </div>
-            `;
-            return;
-        }
-        
-        // 获取NFT详细信息时也添加批处理和延迟
-        const nfts = [];
-        for (let i = 0; i < tokenIds.length; i += batchSize) {
-            const batchPromises = [];
-            
-            for (let j = 0; j < batchSize && (i + j) < tokenIds.length; j++) {
-                const tokenId = tokenIds[i + j];
-                batchPromises.push(
-                    Promise.all([
-                        farmGameContract.methods.tokenURI(tokenId).call(),
-                        farmGameContract.methods.nftInfos(tokenId).call()
-                    ]).then(([uri, info]) => {
-                        const json = atob(uri.split(',')[1]);
-                        const data = JSON.parse(json);
-                        return {
-                            tokenId,
-                            image: data.image,
-                            name: data.name,
-                            type: data.attributes[0].value,
-                            isOpened: info.isOpened,
-                            nftType: info.nftType,
-                            lastHarvestTime: info.lastHarvestTime,
-                            lastFeedTime: info.lastFeedTime,
-                            productionRate: data.attributes[1].value,
-                            feedRequirement: data.attributes[2].value
-                        };
-                    })
-                );
-            }
-            
-            const batchResults = await Promise.all(batchPromises);
-            nfts.push(...batchResults);
-            
-            if (i + batchSize < tokenIds.length) {
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
-        }
-        
-        renderNFTs(nfts);
+        // 分批次加载NFT
+        await loadNFTsInBatches();
         
     } catch (error) {
         console.error("Error loading NFTs:", error);
-        nftContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><div>2加载NFT失败</div></div>';
+        showErrorState();
+    } finally {
+        progressIndicator.style.display = 'none';
     }
 }
 
+// 分批次加载NFT
+async function loadNFTsInBatches() {
+    const BATCH_SIZE = 5;
+    const DELAY_MS = 200;
+    const MAX_TOKENS = 500;
+    
+    let foundNFTs = 0;
+    const allNFTs = [];
+    
+    for (let i = 1; i <= MAX_TOKENS; i += BATCH_SIZE) {
+        const batchPromises = [];
+        
+        // 创建当前批次的请求
+        for (let j = 0; j < BATCH_SIZE && (i + j) <= MAX_TOKENS; j++) {
+            batchPromises.push(
+                withRetry(() => checkTokenOwnership(i + j))
+            );
+        }
+        
+        // 处理当前批次
+        const batchResults = await Promise.all(batchPromises);
+        const validNFTs = batchResults.filter(nft => nft !== null);
+        allNFTs.push(...validNFTs);
+        foundNFTs += validNFTs.length;
+        
+        // 更新进度
+        updateProgress(foundNFTs, MAX_TOKENS);
+        
+        // 添加批次间延迟
+        if (i + BATCH_SIZE <= MAX_TOKENS) {
+            await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+        }
+        
+        // 如果已经找到所有NFT，提前退出
+        if (foundNFTs >= balance) break;
+    }
+    
+    // 缓存结果
+    nftCache.set(accounts[0], allNFTs);
+    renderNFTs(allNFTs);
+}
+
+// 检查Token所有权
+async function checkTokenOwnership(tokenId) {
+    try {
+        const owner = await safeRpcCall('ownerOf', tokenId);
+        if (owner.toLowerCase() === accounts[0].toLowerCase()) {
+            const [uri, info] = await Promise.all([
+                safeRpcCall('tokenURI', tokenId),
+                safeRpcCall('nftInfos', tokenId)
+            ]);
+            
+            // 解析tokenURI
+            const json = atob(uri.split(',')[1]);
+            const data = JSON.parse(json);
+            
+            return {
+                tokenId,
+                image: data.image,
+                name: data.name,
+                type: data.attributes[0].value,
+                isOpened: info.isOpened,
+                nftType: info.nftType,
+                lastHarvestTime: info.lastHarvestTime,
+                lastFeedTime: info.lastFeedTime,
+                productionRate: data.attributes[1].value,
+                feedRequirement: data.attributes[2].value
+            };
+        }
+        return null;
+    } catch (error) {
+        // Token不存在或其他错误
+        return null;
+    }
+}
+
+// 更新加载进度
+function updateProgress(loaded, total) {
+    const percent = Math.min(100, Math.floor((loaded / total) * 100));
+    progressIndicator.querySelector('.progress-bar').style.width = `${percent}%`;
+    progressIndicator.querySelector('.progress-text').textContent = `加载中... ${percent}%`;
+}
+
+// 显示空状态
+function showEmptyState() {
+    nftContainer.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">📦</div>
+            <div class="empty-text">你还没有任何NFT</div>
+            <button class="buy-blindbox-btn" onclick="switchTab('blindbox')">购买盲盒</button>
+        </div>
+    `;
+}
+
+// 显示错误状态
+function showErrorState() {
+    nftContainer.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">❌</div>
+            <div class="empty-text">加载NFT失败</div>
+            <button class="nft-action" onclick="loadNFTs()">重试</button>
+        </div>
+    `;
+}
+
 // 渲染NFT列表
-function renderNFTs() {
+function renderNFTs(nfts) {
     nftContainer.innerHTML = '';
     
     if (nfts.length === 0) {
-        nftContainer.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">📦</div>
-                <div class="empty-text">你还没有任何NFT</div>
-                <button class="buy-blindbox-btn" onclick="switchTab('blindbox')">购买盲盒</button>
-            </div>
-        `;
+        showEmptyState();
         return;
     }
     
@@ -1101,7 +1208,7 @@ function renderNFTs() {
         const harvestAmount = calculateHarvestAmount(nft);
         
         let cardContent = `
-            <img src="${nft.image}" class="nft-image" alt="${nft.name}">
+            <img src="${nft.image}" class="nft-image" alt="${nft.name}" onerror="this.src='fallback-nft.png'">
             <div class="nft-info">
                 <div class="nft-name">${nft.name}</div>
                 <div class="nft-type">${nft.type}</div>
@@ -1160,6 +1267,9 @@ function calculateHarvestAmount(nft) {
 // 打开NFT模态框
 function openNFTModal(nft) {
     modalImage.src = nft.image;
+    modalImage.onerror = function() {
+        this.src = 'fallback-nft.png';
+    };
     modalTitle.textContent = nft.name;
     modalText.textContent = `类型: ${nft.type} | 产出: ${nft.productionRate} | 饲料: ${nft.feedRequirement}`;
     
@@ -1208,20 +1318,19 @@ async function openBlindbox(tokenId) {
     if (!farmGameContract || accounts.length === 0) return;
     
     try {
-        buyBlindboxBtn.disabled = true;
-        buyBlindboxBtn.innerHTML = '<span class="loading"></span> 处理中...';
+        const button = event.target;
+        button.disabled = true;
+        button.innerHTML = '<span class="loading"></span> 处理中...';
         
         await farmGameContract.methods.openBlindBox(tokenId).send({ from: accounts[0] });
         
-        // 刷新NFT列表
+        // 清除缓存并刷新NFT列表
+        nftCache.clear(accounts[0]);
         await loadNFTs();
         
     } catch (error) {
         console.error("Error opening blind box:", error);
         alert("开启盲盒失败: " + error.message);
-    } finally {
-        buyBlindboxBtn.disabled = false;
-        buyBlindboxBtn.textContent = '购买盲盒';
     }
 }
 
@@ -1236,7 +1345,8 @@ async function harvestNFT(tokenId) {
         
         await farmGameContract.methods.harvest(tokenId).send({ from: accounts[0] });
         
-        // 刷新NFT列表
+        // 清除缓存并刷新NFT列表
+        nftCache.clear(accounts[0]);
         await loadNFTs();
         
     } catch (error) {
@@ -1256,7 +1366,8 @@ async function feedNFT(tokenId) {
         
         await farmGameContract.methods.feed(tokenId).send({ from: accounts[0] });
         
-        // 刷新NFT列表
+        // 清除缓存并刷新NFT列表
+        nftCache.clear(accounts[0]);
         await loadNFTs();
         
     } catch (error) {
@@ -1275,7 +1386,8 @@ async function buyBlindbox() {
         
         await farmGameContract.methods.purchaseBlindBox().send({ from: accounts[0] });
         
-        // 刷新NFT列表
+        // 清除缓存并刷新NFT列表
+        nftCache.clear(accounts[0]);
         await loadNFTs();
         
         // 切换回NFT标签页
@@ -1309,16 +1421,15 @@ function switchTab(tabName) {
     }
 }
 
-// 标签点击事件
+// 事件监听
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
         switchTab(tab.dataset.tab);
     });
 });
 
-// 事件监听
 connectWalletBtn.addEventListener('click', initApp);
 buyBlindboxBtn.addEventListener('click', buyBlindbox);
 
-// 初始化
+// 初始化应用
 initApp();
