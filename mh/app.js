@@ -987,13 +987,36 @@ async function loadNFTs() {
             return;
         }
         
-        // 获取每个NFT的tokenId
+        // 替代方案：遍历可能的tokenId范围
+        const maxTokenId = 1000; // 设置一个合理的上限
         const tokenPromises = [];
-        for (let i = 0; i < balance; i++) {
-            tokenPromises.push(farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call());
+        
+        for (let i = 1; i <= maxTokenId; i++) {
+            tokenPromises.push(
+                farmGameContract.methods.ownerOf(i).call()
+                .then(owner => {
+                    if (owner.toLowerCase() === accounts[0].toLowerCase()) {
+                        return i;
+                    }
+                    return null;
+                })
+                .catch(() => null) // 忽略不存在的tokenId错误
+            );
         }
         
-        const tokenIds = await Promise.all(tokenPromises);
+        const tokenResults = await Promise.all(tokenPromises);
+        const tokenIds = tokenResults.filter(id => id !== null);
+        
+        if (tokenIds.length === 0) {
+            nftContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📦</div>
+                    <div class="empty-text">你还没有任何NFT</div>
+                    <button class="buy-blindbox-btn" onclick="switchTab('blindbox')">购买盲盒</button>
+                </div>
+            `;
+            return;
+        }
         
         // 获取每个NFT的详细信息
         const nftPromises = tokenIds.map(tokenId => {
