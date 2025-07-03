@@ -1184,7 +1184,7 @@ function showErrorState() {
     nftContainer.innerHTML = `
         <div class="empty-state">
             <div class="empty-icon">❌</div>
-            <div class="empty-text">加载NFT失败</div>
+            <div class="empty-text">加载NFT失败00</div>
             <button class="nft-action" onclick="loadNFTs()">重试</button>
         </div>
     `;
