@@ -897,9 +897,47 @@ const contractABI = [
 	}
 ];
 
+// GGG代币合约ABI
+const gggTokenABI = [
+    {
+        "constant": false,
+        "inputs": [
+            {"name": "spender","type": "address"},
+            {"name": "value","type": "uint256"}
+        ],
+        "name": "approve",
+        "outputs": [{"name": "","type": "bool"}],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {"name": "owner","type": "address"},
+            {"name": "spender","type": "address"}
+        ],
+        "name": "allowance",
+        "outputs": [{"name": "","type": "uint256"}],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [{"name": "account","type": "address"}],
+        "name": "balanceOf",
+        "outputs": [{"name": "","type": "uint256"}],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    }
+];
+
 // 全局变量
 let web3;
 let farmGameContract;
+let gggTokenContract;
 let accounts = [];
 let nfts = [];
 let openingAnimation = null;
@@ -1011,6 +1049,56 @@ const nftCache = {
     }
 };
 
+// 显示加载状态
+function showLoading(message) {
+    animationContainer.innerHTML = `
+        <div class="animation-overlay">
+            <div class="animation-content">
+                <div class="spinner"></div>
+                <h3>${message}</h3>
+                <p>请等待交易确认...</p>
+            </div>
+        </div>
+    `;
+}
+
+// 隐藏加载状态
+function hideLoading() {
+    animationContainer.innerHTML = '';
+}
+
+// 显示成功状态
+function showSuccess(message) {
+    animationContainer.innerHTML = `
+        <div class="animation-overlay">
+            <div class="animation-content">
+                <div style="font-size: 3rem; color: var(--success);">✓</div>
+                <h3>${message}</h3>
+                <button class="modal-btn" onclick="hideAnimation()">确定</button>
+            </div>
+        </div>
+    `;
+}
+
+// 显示错误状态
+function showError(message) {
+    animationContainer.innerHTML = `
+        <div class="animation-overlay">
+            <div class="animation-content">
+                <div style="font-size: 3rem; color: var(--danger);">✗</div>
+                <h3>操作失败</h3>
+                <p>${message}</p>
+                <button class="modal-btn" onclick="hideAnimation()">确定</button>
+            </div>
+        </div>
+    `;
+}
+
+// 隐藏动画
+function hideAnimation() {
+    animationContainer.innerHTML = '';
+}
+
 // 初始化应用
 async function initApp() {
     if (typeof window.ethereum !== 'undefined') {
@@ -1021,6 +1109,10 @@ async function initApp() {
             
             // 初始化合约
             farmGameContract = new web3.eth.Contract(contractABI, contractAddress);
+            
+            // 获取GGG代币合约地址并初始化
+            const gggTokenAddress = await farmGameContract.methods.gggToken().call();
+            gggTokenContract = new web3.eth.Contract(gggTokenABI, gggTokenAddress);
             
             // 更新UI
             updateWalletUI();
@@ -1394,6 +1486,21 @@ async function buyBlindbox() {
         buyBlindboxBtn.disabled = true;
         buyBlindboxBtn.innerHTML = '<span class="loading"></span> 处理中...';
         
+        // 检查GGG余额
+        const price = await farmGameContract.methods.blindBoxPrice().call();
+        const balance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
+        
+        if (BigInt(balance) < BigInt(price)) {
+            throw new Error('GGG代币余额不足');
+        }
+        
+        // 检查授权额度
+        const allowance = await gggTokenContract.methods.allowance(accounts[0], contractAddress).call();
+        if (BigInt(allowance) < BigInt(price)) {
+            // 需要先授权
+            await gggTokenContract.methods.approve(contractAddress, price).send({ from: accounts[0] });
+        }
+        
         await farmGameContract.methods.purchaseBlindBox().send({ from: accounts[0] });
         
         // 清除缓存并刷新NFT列表
@@ -1420,27 +1527,37 @@ async function buyCow(cowType) {
         // 显示加载状态
         showLoading(`正在购买${getCowName(cowType)}...`);
         
-        // 根据不同类型设置价格
-        let price;
+        // 根据不同类型设置价格（使用GGG代币）
+        let priceInGGG;
         switch(cowType) {
             case 1: // 普通奶牛
-                price = web3.utils.toWei('1', 'ether');
+                priceInGGG = web3.utils.toWei('100', 'ether'); // 100 GGG
                 break;
             case 2: // 黄金奶牛
-                price = web3.utils.toWei('5', 'ether');
+                priceInGGG = web3.utils.toWei('500', 'ether'); // 500 GGG
                 break;
             case 3: // 稀有奶牛
-                price = web3.utils.toWei('10', 'ether');
+                priceInGGG = web3.utils.toWei('1000', 'ether'); // 1000 GGG
                 break;
             default:
                 throw new Error('未知奶牛类型');
         }
         
-        // 调用购买函数
-        await farmGameContract.methods.purchaseBlindBox().send({
-            from: accounts[0],
-            value: price
-        });
+        // 检查用户是否有足够的GGG余额
+        const gggBalance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
+        if (BigInt(gggBalance) < BigInt(priceInGGG)) {
+            throw new Error('GGG代币余额不足');
+        }
+        
+        // 检查合约是否有足够的授权额度
+        const allowance = await gggTokenContract.methods.allowance(accounts[0], contractAddress).call();
+        if (BigInt(allowance) < BigInt(priceInGGG)) {
+            // 需要先授权
+            await gggTokenContract.methods.approve(contractAddress, priceInGGG).send({ from: accounts[0] });
+        }
+        
+        // 调用购买盲盒函数（因为我们没有专门的购买奶牛函数）
+        await farmGameContract.methods.purchaseBlindBox().send({ from: accounts[0] });
         
         // 显示购买成功
         showSuccess(`成功购买${getCowName(cowType)}!`);
@@ -1501,51 +1618,6 @@ function updateBlindboxInfo() {
     
     infoContainer.innerHTML = html;
     blindboxTab.querySelector('.section-title').after(infoContainer);
-}
-
-// 显示加载状态
-function showLoading(message) {
-    animationContainer.innerHTML = `
-        <div class="animation-overlay">
-            <div class="animation-content">
-                <div class="spinner"></div>
-                <h3>${message}</h3>
-                <p>请等待交易确认...</p>
-            </div>
-        </div>
-    `;
-}
-
-// 显示成功状态
-function showSuccess(message) {
-    animationContainer.innerHTML = `
-        <div class="animation-overlay">
-            <div class="animation-content">
-                <div style="font-size: 3rem; color: var(--success);">✓</div>
-                <h3>${message}</h3>
-                <button class="modal-btn" onclick="hideAnimation()">确定</button>
-            </div>
-        </div>
-    `;
-}
-
-// 显示错误状态
-function showError(message) {
-    animationContainer.innerHTML = `
-        <div class="animation-overlay">
-            <div class="animation-content">
-                <div style="font-size: 3rem; color: var(--danger);">✗</div>
-                <h3>操作失败</h3>
-                <p>${message}</p>
-                <button class="modal-btn" onclick="hideAnimation()">确定</button>
-            </div>
-        </div>
-    `;
-}
-
-// 隐藏动画
-function hideAnimation() {
-    animationContainer.innerHTML = '';
 }
 
 // 禁用所有按钮
