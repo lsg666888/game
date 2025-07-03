@@ -1,688 +1,1398 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>666农场游戏管理员面板</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .panel {
-      background-color: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: #2c3e50;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #2980b9;
-    }
-    .wallet-info {
-      background-color: #e8f4fc;
-      padding: 15px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-    }
-    .status {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 4px;
-    }
-    .success {
-      background-color: #d4edda;
-      color: #155724;
-    }
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-    .contract-info {
-      margin-top: 30px;
-      font-size: 14px;
-      color: #7f8c8d;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmGame - 农场游戏</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6C5CE7;
+            --secondary: #00CEFF;
+            --success: #00B894;
+            --warning: #FDCB6E;
+            --danger: #D63031;
+            --dark: #2D3436;
+            --light: #F5F6FA;
+            --gray: #636E72;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+        }
+        
+        .wallet-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .wallet-btn:hover {
+            background: #5649c0;
+            transform: translateY(-2px);
+        }
+        
+        .wallet-btn i {
+            margin-right: 8px;
+        }
+        
+        .wallet-address {
+            background: rgba(108, 92, 231, 0.1);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .wallet-address i {
+            margin-right: 8px;
+        }
+        
+        .wallet-selector {
+            position: relative;
+        }
+        
+        .wallet-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            width: 200px;
+            z-index: 100;
+            display: none;
+        }
+        
+        .wallet-dropdown.active {
+            display: block;
+        }
+        
+        .wallet-option {
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .wallet-option:hover {
+            background: var(--light);
+        }
+        
+        .wallet-option i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .balance-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .balance-card {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .balance-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .balance-icon.ggg {
+            background: var(--primary);
+        }
+        
+        .balance-icon.fgg {
+            background: var(--success);
+        }
+        
+        .balance-info h3 {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+        
+        .balance-info p {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .action-btn {
+            background: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            justify-content: center;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-btn i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .nft-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .nft-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .nft-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nft-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .nft-info {
+            padding: 15px;
+        }
+        
+        .nft-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .nft-type {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 10px;
+        }
+        
+        .nft-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .nft-stat {
+            text-align: center;
+        }
+        
+        .nft-stat h4 {
+            font-size: 12px;
+            color: var(--gray);
+            margin-bottom: 3px;
+        }
+        
+        .nft-stat p {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .nft-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nft-btn {
+            flex: 1;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nft-btn i {
+            margin-right: 5px;
+        }
+        
+        .nft-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .nft-btn.secondary {
+            background: var(--light);
+            color: var(--dark);
+        }
+        
+        .nft-btn:hover {
+            opacity: 0.9;
+        }
+        
+        .blindbox-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .nft-card:hover .blindbox-overlay {
+            opacity: 1;
+        }
+        
+        .blindbox-overlay h3 {
+            margin-bottom: 10px;
+        }
+        
+        .blindbox-overlay p {
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+            transform: translateY(20px);
+            transition: all 0.3s;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        
+        .modal-title {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .modal-text {
+            margin-bottom: 25px;
+            color: var(--gray);
+        }
+        
+        .modal-image {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            margin: 0 auto 20px;
+            display: block;
+        }
+        
+        .modal-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 10px;
+        }
+        
+        .modal-btn:hover {
+            background: #5649c0;
+        }
+        
+        .modal-btn.secondary {
+            background: var(--light);
+            color: var(--dark);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .balance-container {
+                flex-direction: column;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .nft-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="header">
-    <h1>222农场游戏管理员面板</h1>
-    <p>Conflux eSpace 链管理界面</p>
-  </div>
-
-  <div class="wallet-info">
-    <h2>钱包连接</h2>
-    <div id="walletAddress">未连接钱包</div>
-    <button id="connectWalletBtn">连接钱包</button>
-    <div id="walletStatus" class="status"></div>
-  </div>
-
-  <div class="panel">
-    <h2>盲盒设置</h2>
-    <div class="form-group">
-      <label for="blindBoxPrice">盲盒价格 (GGG)</label>
-      <input type="number" id="blindBoxPrice" placeholder="例如: 100">
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-tractor"></i>
+                FarmGame
+            </div>
+            <div class="wallet-selector">
+                <button id="connectWallet" class="wallet-btn">
+                    <i class="fas fa-wallet"></i>
+                    连接钱包
+                </button>
+                <div id="walletDropdown" class="wallet-dropdown">
+                    <div class="wallet-option" data-wallet="metamask">
+                        <i class="fab fa-ethereum"></i>
+                        MetaMask
+                    </div>
+                    <div class="wallet-option" data-wallet="tokenpocket">
+                        <i class="fas fa-wallet"></i>
+                        TokenPocket
+                    </div>
+                </div>
+                <div id="walletInfo" class="wallet-address" style="display: none;">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="walletAddress"></span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="balance-container">
+            <div class="balance-card">
+                <div class="balance-icon ggg">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="balance-info">
+                    <h3>GGG 余额</h3>
+                    <p id="gggBalance">0</p>
+                </div>
+            </div>
+            <div class="balance-card">
+                <div class="balance-icon fgg">
+                    <i class="fas fa-wheat-awn"></i>
+                </div>
+                <div class="balance-info">
+                    <h3>FGG 余额</h3>
+                    <p id="fggBalance">0</p>
+                </div>
+            </div>
+        </div>
+        
+        <h2 class="section-title">
+            <i class="fas fa-bolt"></i>
+            快速操作
+        </h2>
+        
+        <div class="actions">
+            <button id="buyBlindBox" class="action-btn primary">
+                <i class="fas fa-gift"></i>
+                购买盲盒 (100 GGG)
+            </button>
+            <button id="harvestAll" class="action-btn">
+                <i class="fas fa-hand-holding-water"></i>
+                一键收获
+            </button>
+            <button id="feedAll" class="action-btn">
+                <i class="fas fa-utensils"></i>
+                一键喂养
+            </button>
+        </div>
+        
+        <h2 class="section-title">
+            <i class="fas fa-box-open"></i>
+            我的 NFT
+        </h2>
+        
+        <div id="nftContainer" class="nft-grid">
+            <!-- NFT 卡片将通过 JavaScript 动态生成 -->
+        </div>
     </div>
-    <button onclick="setBlindBoxPrice()">设置盲盒价格</button>
-    <div id="blindBoxStatus" class="status"></div>
-  </div>
-
-  <div class="panel">
-    <h2>NFT配置设置</h2>
-    <div class="form-group">
-      <label for="nftType">NFT类型</label>
-      <select id="nftType">
-        <option value="0">普通奶牛</option>
-        <option value="1">黄金奶牛</option>
-        <option value="2">稀有奶牛</option>
-        <option value="3">初级牧场</option>
-        <option value="4">中级牧场</option>
-        <option value="5">高级牧场</option>
-      </select>
+    
+    <!-- 盲盒开启确认模态框 -->
+    <div id="openBlindboxModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">开启盲盒</h2>
+            <img id="blindboxImage" class="modal-image" src="https://raw.githubusercontent.com/lsg666888/token-logo/refs/heads/main/manghe.png" alt="盲盒">
+            <p class="modal-text">确定要开启这个盲盒吗？开启后将随机获得一个奶牛或牧场 NFT。</p>
+            <div>
+                <button id="confirmOpen" class="modal-btn">确认开启</button>
+                <button id="cancelOpen" class="modal-btn secondary">取消</button>
+            </div>
+        </div>
     </div>
-    <div class="form-group">
-      <label for="productionRate">生产速率 (单位: GGG/小时 或 FGG/天)</label>
-      <input type="number" id="productionRate" placeholder="例如: 1">
+    
+    <!-- 盲盒结果模态框 -->
+    <div id="blindboxResultModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">恭喜获得!</h2>
+            <img id="resultImage" class="modal-image" src="" alt="NFT">
+            <p id="resultType" class="modal-text"></p>
+            <button id="closeResult" class="modal-btn">确定</button>
+        </div>
     </div>
-    <div class="form-group">
-      <label for="feedRequirement">喂养需求 (单位: FGG 或 GGG)</label>
-      <input type="number" id="feedRequirement" placeholder="例如: 1">
+    
+    <!-- 收获确认模态框 -->
+    <div id="harvestModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">收获确认</h2>
+            <p id="harvestAmount" class="modal-text"></p>
+            <button id="confirmHarvest" class="modal-btn">确认收获</button>
+        </div>
     </div>
-    <div class="form-group">
-      <label for="imageURI">图片链接</label>
-      <input type="text" id="imageURI" placeholder="https://example.com/image.png">
+    
+    <!-- 钱包安装提示模态框 -->
+    <div id="walletInstallModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">安装钱包</h2>
+            <p id="walletInstallText" class="modal-text"></p>
+            <button id="installWallet" class="modal-btn">前往安装</button>
+        </div>
     </div>
-    <button onclick="setNFTConfig()">设置NFT配置</button>
-    <div id="nftConfigStatus" class="status"></div>
-  </div>
-
-  <div class="panel">
-    <h2>资金管理</h2>
-    <div class="form-group">
-      <label for="gggAmount">提取GGG数量</label>
-      <input type="number" id="gggAmount" placeholder="例如: 100">
-    </div>
-    <button onclick="withdrawGGG()">提取GGG</button>
-    <div class="form-group" style="margin-top: 15px;">
-      <label for="fggAmount">提取FGG数量</label>
-      <input type="number" id="fggAmount" placeholder="例如: 100">
-    </div>
-    <button onclick="withdrawFGG()">提取FGG</button>
-    <div id="withdrawStatus" class="status"></div>
-  </div>
-
-
-<div class="panel">
-  <h2>合约资金监控</h2>
-  <div>
-    <p>GGG余额: <span id="contractGGGBalance">加载中...</span></p>
-    <p>FGG余额: <span id="contractFGGBalance">加载中...</span></p>
-    <button onclick="refreshBalances()">刷新余额</button>
-  </div>
-</div>
-
-<script>
-async function refreshBalances() {
-  const gggToken = new ethers.Contract(gggTokenAddress, ["function balanceOf(address) view returns (uint256)"], provider);
-  const fggToken = new ethers.Contract(fggTokenAddress, ["function balanceOf(address) view returns (uint256)"], provider);
-  
-  const gggBalance = await gggToken.balanceOf(farmGameAddress);
-  const fggBalance = await fggToken.balanceOf(farmGameAddress);
-  
-  document.getElementById('contractGGGBalance').textContent = ethers.utils.formatUnits(gggBalance, 18);
-  document.getElementById('contractFGGBalance').textContent = ethers.utils.formatUnits(fggBalance, 18);
-}
-
-// 页面加载时自动刷新
-window.addEventListener('load', refreshBalances);
-</script>
-
-
-
-  
-  <div class="contract-info">
-    <h3>合约信息</h3>
-    <p><strong>FarmGame合约地址:</strong> <span id="farmGameAddress">0xc8De5C417a708a5B3ad2508eca4e93004fa2246c</span></p>
-    <p><strong>GGG代币地址:</strong> <span id="gggTokenAddress">0x2de53b9a3282eeab1392d8ec4e33d5784e54850b</span></p>
-    <p><strong>FGG代币地址:</strong> <span id="fggTokenAddress">0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9</span></p>
-    <p><strong>网络:</strong> Conflux eSpace (ChainID: 1030)</p>
-  </div>
-
-  <script>
-    // 合约地址
-    const farmGameAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c";
-    const gggTokenAddress = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b";
-    const fggTokenAddress = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9";
-    const confluxESpaceChainId = "0x406"; // 1030 in hex
-
-    // 全局变量
-    let provider;
-    let signer = null;
-    let currentAddress = null;
-    let farmGameContract = null;
-
-    // 初始化页面
-    window.addEventListener('load', async () => {
-      document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
-      
-      // 如果MetaMask已连接，自动连接
-      if (window.ethereum && window.ethereum.selectedAddress) {
-        await connectWallet();
-      }
-    });
-
-    // 检查并切换到正确的网络
-    async function checkNetwork() {
-      try {
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        if (chainId !== confluxESpaceChainId) {
-          try {
-            await window.ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: confluxESpaceChainId }],
-            });
-          } catch (switchError) {
-            // 如果用户没有添加网络，提示他们添加
-            if (switchError.code === 4902) {
-              try {
-                await window.ethereum.request({
-                  method: 'wallet_addEthereumChain',
-                  params: [{
-                    chainId: confluxESpaceChainId,
-                    chainName: 'Conflux eSpace',
-                    nativeCurrency: {
-                      name: 'CFX',
-                      symbol: 'CFX',
-                      decimals: 18
-                    },
-                    rpcUrls: ['https://evm.confluxrpc.com'],
-                    blockExplorerUrls: ['https://evm.confluxscan.io']
-                  }]
+    
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script>
+        // 合约地址和ABI
+        const GGG_TOKEN_ADDRESS = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b"; // 替换为实际的GGG代币合约地址
+        const FGG_TOKEN_ADDRESS = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9"; // 替换为实际的FGG代币合约地址
+        const FARM_GAME_ADDRESS = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c"; // 替换为实际的FarmGame合约地址
+        
+        // 合约ABI (简化版，实际使用时需要完整的ABI)
+        const GGG_TOKEN_ABI = [
+            // ERC20标准函数
+            "function balanceOf(address owner) view returns (uint256)",
+            "function transfer(address to, uint256 amount) returns (bool)",
+            "function transferFrom(address from, address to, uint256 amount) returns (bool)",
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function allowance(address owner, address spender) view returns (uint256)"
+        ];
+        
+        const FGG_TOKEN_ABI = GGG_TOKEN_ABI; // FGG代币ABI与GGG相同
+        
+        const FARM_GAME_ABI = [
+            // ERC721标准函数
+            "function balanceOf(address owner) view returns (uint256)",
+            "function ownerOf(uint256 tokenId) view returns (address)",
+            "function tokenURI(uint256 tokenId) view returns (string)",
+            "function approve(address to, uint256 tokenId)",
+            "function getApproved(uint256 tokenId) view returns (address)",
+            "function setApprovalForAll(address operator, bool approved)",
+            "function isApprovedForAll(address owner, address operator) view returns (bool)",
+            
+            // 游戏特定函数
+            "function purchaseBlindBox()",
+            "function openBlindBox(uint256 tokenId)",
+            "function harvest(uint256 tokenId)",
+            "function feed(uint256 tokenId)",
+            "function calculateHarvestAmount(uint256 tokenId) view returns (uint256 amount, bool isGGG)",
+            "function nftInfos(uint256 tokenId) view returns (uint8 nftType, uint256 lastHarvestTime, uint256 lastFeedTime, bool isOpened)",
+            "function blindBoxPrice() view returns (uint256)",
+            
+            // 事件
+            "event BlindBoxPurchased(address indexed buyer, uint256 tokenId)",
+            "event BlindBoxOpened(address indexed owner, uint256 tokenId, uint8 nftType)",
+            "event Harvested(address indexed owner, uint256 tokenId, uint256 amount, bool isGGG)",
+            "event Fed(address indexed owner, uint256 tokenId, bool isGGG)"
+        ];
+        
+        // 全局变量
+        let web3;
+        let accounts = [];
+        let gggTokenContract;
+        let fggTokenContract;
+        let farmGameContract;
+        let currentOpenTokenId = null;
+        let currentHarvestTokenId = null;
+        let selectedWallet = null;
+        
+        // NFT类型映射
+        const NFT_TYPES = {
+            0: { name: "普通奶牛", class: "cow" },
+            1: { name: "黄金奶牛", class: "cow" },
+            2: { name: "稀有奶牛", class: "cow" },
+            3: { name: "初级牧场", class: "farm" },
+            4: { name: "中级牧场", class: "farm" },
+            5: { name: "高级牧场", class: "farm" }
+        };
+        
+        // 初始化应用
+        async function initApp() {
+            // 设置事件监听器
+            setupEventListeners();
+            
+            // 检查是否已连接钱包
+            if (localStorage.getItem('walletConnected') === 'true') {
+                const walletType = localStorage.getItem('walletType');
+                if (walletType) {
+                    await connectWallet(walletType);
+                }
+            }
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 连接钱包按钮
+            document.getElementById('connectWallet').addEventListener('click', toggleWalletDropdown);
+            
+            // 钱包选项
+            document.querySelectorAll('.wallet-option').forEach(option => {
+                option.addEventListener('click', async () => {
+                    const walletType = option.dataset.wallet;
+                    await connectWallet(walletType);
+                    document.getElementById('walletDropdown').classList.remove('active');
                 });
-              } catch (addError) {
-                throw new Error('请手动切换到Conflux eSpace网络');
-              }
-            } else {
-              throw new Error('请切换到Conflux eSpace网络');
+            });
+            
+            // 购买盲盒按钮
+            document.getElementById('buyBlindBox').addEventListener('click', purchaseBlindBox);
+            
+            // 一键收获按钮
+            document.getElementById('harvestAll').addEventListener('click', harvestAllNFTs);
+            
+            // 一键喂养按钮
+            document.getElementById('feedAll').addEventListener('click', feedAllNFTs);
+            
+            // 盲盒模态框按钮
+            document.querySelectorAll('#openBlindboxModal .close-modal, #cancelOpen').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('openBlindboxModal').classList.remove('active');
+                });
+            });
+            
+            // 确认开启盲盒
+            document.getElementById('confirmOpen').addEventListener('click', openBlindBox);
+            
+            // 盲盒结果模态框关闭
+            document.querySelectorAll('#blindboxResultModal .close-modal, #closeResult').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('blindboxResultModal').classList.remove('active');
+                });
+            });
+            
+            // 收获确认模态框
+            document.querySelectorAll('#harvestModal .close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('harvestModal').classList.remove('active');
+                });
+            });
+            
+            // 确认收获
+            document.getElementById('confirmHarvest').addEventListener('click', harvestNFT);
+            
+            // 钱包安装模态框
+            document.querySelectorAll('#walletInstallModal .close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('walletInstallModal').classList.remove('active');
+                });
+            });
+            
+            // 安装钱包按钮
+            document.getElementById('installWallet').addEventListener('click', () => {
+                const walletType = document.getElementById('installWallet').dataset.wallet;
+                if (walletType === 'metamask') {
+                    window.open('https://metamask.io/download.html', '_blank');
+                } else if (walletType === 'tokenpocket') {
+                    window.open('https://www.tokenpocket.pro/', '_blank');
+                }
+            });
+        }
+        
+        // 切换钱包下拉菜单
+        function toggleWalletDropdown() {
+            document.getElementById('walletDropdown').classList.toggle('active');
+        }
+        
+        // 连接钱包
+        async function connectWallet(walletType) {
+            try {
+                selectedWallet = walletType;
+                
+                if (walletType === 'metamask') {
+                    await connectMetaMask();
+                } else if (walletType === 'tokenpocket') {
+                    await connectTokenPocket();
+                }
+                
+                // 保存连接状态
+                localStorage.setItem('walletConnected', 'true');
+                localStorage.setItem('walletType', walletType);
+                
+                // 初始化合约
+                await initContracts();
+                
+                // 加载用户数据
+                await loadUserData();
+                
+            } catch (error) {
+                console.error("Error connecting wallet:", error);
+                
+                // 显示钱包安装提示
+                if (error.message.includes('MetaMask') || error.message.includes('TokenPocket')) {
+                    showWalletInstallModal(walletType);
+                } else {
+                    alert("连接钱包失败: " + error.message);
+                }
             }
-          }
         }
-      } catch (error) {
-        console.error("网络检查错误:", error);
-        throw error;
-      }
-    }
-
-    // 连接钱包
-    async function connectWallet() {
-      if (window.ethereum) {
-        try {
-          showStatus('walletStatus', '正在连接钱包...');
-          
-          // 检查并切换到正确的网络
-          await checkNetwork();
-          
-          // 使用钱包的提供者
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          await provider.send("eth_requestAccounts", []);
-          signer = provider.getSigner();
-          currentAddress = await signer.getAddress();
-          
-          // 更新UI显示
-          document.getElementById('walletAddress').textContent = 
-            `已连接钱包: ${currentAddress.substring(0, 6)}...${currentAddress.substring(currentAddress.length - 4)}`;
-          
-          // 初始化合约实例
-          farmGameContract = await getFarmGameContract();
-          
-          // 检查是否是所有者
-          const isOwner = await checkIsOwner();
-          if (!isOwner) {
-            showStatus('walletStatus', '警告: 当前钱包不是合约所有者', 'error');
-          } else {
-            showStatus('walletStatus', '✓ 已连接 (合约所有者)', 'success');
-            // 加载当前盲盒价格
-            loadCurrentBlindBoxPrice();
-          }
-          
-          // 监听账户变化
-          window.ethereum.on('accountsChanged', (newAccounts) => {
-            if (newAccounts.length === 0) {
-              // 钱包已锁定
-              signer = null;
-              currentAddress = null;
-              document.getElementById('walletAddress').textContent = '未连接钱包';
-              showStatus('walletStatus', '钱包已断开连接', 'error');
+        
+        // 连接MetaMask
+        async function connectMetaMask() {
+            if (window.ethereum && window.ethereum.isMetaMask) {
+                // 检查是否已授权
+                accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                
+                if (accounts.length === 0) {
+                    // 请求授权
+                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                }
+                
+                // 初始化Web3
+                web3 = new Web3(window.ethereum);
+                
+                // 监听账户变化
+                window.ethereum.on('accountsChanged', (newAccounts) => {
+                    accounts = newAccounts;
+                    if (accounts.length > 0) {
+                        updateWalletInfo();
+                        loadUserData();
+                    } else {
+                        resetWalletInfo();
+                    }
+                });
+                
+                // 更新钱包信息
+                updateWalletInfo();
+                
             } else {
-              // 切换了账户
-              location.reload(); // 简单处理: 刷新页面
+                throw new Error('请安装MetaMask钱包扩展程序');
             }
-          });
-          
-          // 监听网络变化
-          window.ethereum.on('chainChanged', (chainId) => {
-            if (chainId !== confluxESpaceChainId) {
-              showStatus('walletStatus', '请切换到Conflux eSpace网络', 'error');
+        }
+        
+        // 连接TokenPocket
+        async function connectTokenPocket() {
+            if (window.tokenpocket && window.tokenpocket.conflux) {
+                // TokenPocket已注入
+                accounts = await window.tokenpocket.conflux.request({ method: 'cfx_accounts' });
+                
+                if (accounts.length === 0) {
+                    // 请求授权
+                    accounts = await window.tokenpocket.conflux.request({ method: 'cfx_requestAccounts' });
+                }
+                
+                // 初始化Web3
+                web3 = new Web3(window.tokenpocket.conflux);
+                
+                // 监听账户变化
+                window.tokenpocket.conflux.on('accountsChanged', (newAccounts) => {
+                    accounts = newAccounts;
+                    if (accounts.length > 0) {
+                        updateWalletInfo();
+                        loadUserData();
+                    } else {
+                        resetWalletInfo();
+                    }
+                });
+                
+                // 更新钱包信息
+                updateWalletInfo();
+                
             } else {
-              location.reload();
+                throw new Error('请安装TokenPocket钱包应用');
             }
-          });
-          
-        } catch (error) {
-          console.error('钱包连接错误:', error);
-          showStatus('walletStatus', `连接失败: ${error.message}`, 'error');
-        }
-      } else {
-        showStatus('walletStatus', '请安装MetaMask或Conflux钱包', 'error');
-      }
-    }
-
-    // 获取FarmGame合约实例
-    async function getFarmGameContract() {
-      const farmGameABI = [
-        // 合约所有者
-        {
-          "inputs": [],
-          "name": "owner",
-          "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        // 设置盲盒价格
-        {
-          "inputs": [{"internalType": "uint256", "name": "newPrice", "type": "uint256"}],
-          "name": "setBlindBoxPrice",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        // 获取盲盒价格
-        {
-          "inputs": [],
-          "name": "blindBoxPrice",
-          "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        // 设置NFT配置
-        {
-          "inputs": [
-            {"internalType": "enum FarmGame.NFTType", "name": "nftType", "type": "uint8"},
-            {"internalType": "uint256", "name": "productionRate", "type": "uint256"},
-            {"internalType": "uint256", "name": "feedRequirement", "type": "uint256"},
-            {"internalType": "string", "name": "imageURI", "type": "string"}
-          ],
-          "name": "setNFTConfig",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        // 提取GGG
-        {
-          "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
-          "name": "withdrawGGG",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        // 提取FGG
-        {
-          "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
-          "name": "withdrawFGG",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        // GGG代币地址
-        {
-          "inputs": [],
-          "name": "gggToken",
-          "outputs": [{"internalType": "contract GGGToken", "name": "", "type": "address"}],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        // FGG代币地址
-        {
-          "inputs": [],
-          "name": "fggToken",
-          "outputs": [{"internalType": "contract FGGToken", "name": "", "type": "address"}],
-          "stateMutability": "view",
-          "type": "function"
-        }
-      ];
-      return new ethers.Contract(farmGameAddress, farmGameABI, signer);
-    }
-
-    // 检查是否是合约所有者
-    async function checkIsOwner() {
-      if (!farmGameContract) return false;
-      try {
-        const owner = await farmGameContract.owner();
-        return owner.toLowerCase() === currentAddress.toLowerCase();
-      } catch (error) {
-        console.error("检查所有者错误:", error);
-        return false;
-      }
-    }
-
-    // 加载当前盲盒价格
-    async function loadCurrentBlindBoxPrice() {
-      try {
-        const currentPrice = await farmGameContract.blindBoxPrice();
-        document.getElementById('blindBoxPrice').value = ethers.utils.formatUnits(currentPrice, 18);
-      } catch (error) {
-        console.error("获取盲盒价格失败:", error);
-        showStatus('blindBoxStatus', `获取当前价格失败: ${error.message}`, 'error');
-      }
-    }
-
-    // 设置盲盒价格
-    async function setBlindBoxPrice() {
-      try {
-        const newPrice = document.getElementById('blindBoxPrice').value;
-        if (!newPrice) throw new Error("请输入盲盒价格");
-        
-        if (!await checkIsOwner()) {
-          throw new Error("只有合约所有者可以执行此操作");
         }
         
-        showStatus('blindBoxStatus', '交易发送中...');
-        
-        const tx = await farmGameContract.setBlindBoxPrice(
-          ethers.utils.parseUnits(newPrice, 18),
-          { gasLimit: 500000 }
-        ).catch(error => {
-          throw new Error(`交易发送失败: ${error.data?.message || error.message}`);
-        });
-        
-        showStatus('blindBoxStatus', '交易已发送，等待确认...');
-        
-        await tx.wait();
-        showStatus('blindBoxStatus', '✓ 盲盒价格设置成功', 'success');
-      } catch (error) {
-        console.error("设置盲盒价格错误:", error);
-        showStatus('blindBoxStatus', `设置失败: ${error.message}`, 'error');
-      }
-    }
-
-    // 设置NFT配置
-    async function setNFTConfig() {
-      try {
-        const nftType = parseInt(document.getElementById('nftType').value);
-        const productionRate = document.getElementById('productionRate').value;
-        const feedRequirement = document.getElementById('feedRequirement').value;
-        const imageURI = document.getElementById('imageURI').value;
-
-        if (!productionRate || !feedRequirement || !imageURI) {
-          throw new Error("请填写完整的NFT配置");
+        // 显示钱包安装提示
+        function showWalletInstallModal(walletType) {
+            const modal = document.getElementById('walletInstallModal');
+            const text = document.getElementById('walletInstallText');
+            const installBtn = document.getElementById('installWallet');
+            
+            if (walletType === 'metamask') {
+                text.textContent = '要使用MetaMask连接，请先安装MetaMask浏览器扩展程序。';
+                installBtn.dataset.wallet = 'metamask';
+                installBtn.textContent = '安装MetaMask';
+            } else if (walletType === 'tokenpocket') {
+                text.textContent = '要使用TokenPocket连接，请先安装TokenPocket移动应用。';
+                installBtn.dataset.wallet = 'tokenpocket';
+                installBtn.textContent = '安装TokenPocket';
+            }
+            
+            modal.classList.add('active');
         }
         
-        if (!await checkIsOwner()) {
-          throw new Error("只有合约所有者可以执行此操作");
+        // 初始化合约
+        async function initContracts() {
+            if (!web3) return;
+            
+            gggTokenContract = new web3.eth.Contract(GGG_TOKEN_ABI, GGG_TOKEN_ADDRESS);
+            fggTokenContract = new web3.eth.Contract(FGG_TOKEN_ABI, FGG_TOKEN_ADDRESS);
+            farmGameContract = new web3.eth.Contract(FARM_GAME_ABI, FARM_GAME_ADDRESS);
         }
         
-        showStatus('nftConfigStatus', '交易发送中...');
+        // 更新钱包信息
+        function updateWalletInfo() {
+            const walletBtn = document.getElementById('connectWallet');
+            const walletInfo = document.getElementById('walletInfo');
+            const walletAddress = document.getElementById('walletAddress');
+            
+            walletBtn.style.display = 'none';
+            walletInfo.style.display = 'flex';
+            
+            // 缩短地址显示
+            const shortAddress = `${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}`;
+            walletAddress.textContent = shortAddress;
+        }
         
-        const tx = await farmGameContract.setNFTConfig(
-          nftType,
-          ethers.utils.parseUnits(productionRate, 18),
-          ethers.utils.parseUnits(feedRequirement, 18),
-          imageURI,
-          { gasLimit: 500000 }
-        ).catch(error => {
-          throw new Error(`交易发送失败: ${error.data?.message || error.message}`);
-        });
+        // 重置钱包信息
+        function resetWalletInfo() {
+            const walletBtn = document.getElementById('connectWallet');
+            const walletInfo = document.getElementById('walletInfo');
+            
+            walletBtn.style.display = 'flex';
+            walletInfo.style.display = 'none';
+            
+            // 清空用户数据
+            document.getElementById('gggBalance').textContent = '0';
+            document.getElementById('fggBalance').textContent = '0';
+            document.getElementById('nftContainer').innerHTML = '';
+            
+            // 清除本地存储
+            localStorage.removeItem('walletConnected');
+            localStorage.removeItem('walletType');
+        }
         
-        showStatus('nftConfigStatus', '交易已发送，等待确认...');
+        // 加载用户数据
+        async function loadUserData() {
+            if (accounts.length === 0) return;
+            
+            // 加载代币余额
+            await loadTokenBalances();
+            
+            // 加载用户的NFT
+            await loadUserNFTs();
+        }
         
-        await tx.wait();
-        showStatus('nftConfigStatus', '✓ NFT配置已更新', 'success');
-      } catch (error) {
-        console.error("设置NFT配置错误:", error);
-        showStatus('nftConfigStatus', `设置失败: ${error.message}`, 'error');
-      }
-    }
-
-async function withdrawGGG() {
-  try {
-    const amountInput = document.getElementById('gggAmount');
-    const amount = amountInput.value;
-    
-    // 输入验证
-    if (!amount || isNaN(amount)) {
-      throw new Error("请输入有效的GGG数量");
-    }
-    
-    // 权限检查
-    if (!await checkIsOwner()) {
-      throw new Error("只有合约所有者可以执行此操作");
-    }
-    
-    showStatus('withdrawStatus', '正在检查合约GGG余额和授权...');
-    
-    // GGG代币ABI
-    const erc20ABI = [
-      "function balanceOf(address) view returns (uint256)",
-      "function allowance(address,address) view returns (uint256)"
-    ];
-    const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, provider);
-    
-    // 检查余额
-    const contractBalance = await gggToken.balanceOf(farmGameAddress);
-    const amountToWithdraw = ethers.utils.parseUnits(amount, 18);
-    
-    if (amountToWithdraw.gt(contractBalance)) {
-      throw new Error(`合约GGG余额不足。当前余额: ${ethers.utils.formatUnits(contractBalance, 18)} GGG`);
-    }
-    
-    // 检查授权额度
-    const allowance = await gggToken.allowance(farmGameAddress, currentAddress);
-    if (amountToWithdraw.gt(allowance)) {
-      throw new Error(`合约未授权足够额度。当前授权: ${ethers.utils.formatUnits(allowance, 18)} GGG`);
-    }
-    
-    showStatus('withdrawStatus', '发送提取交易...');
-    
-    // 执行提取
-    const tx = await farmGameContract.withdrawGGG(
-      amountToWithdraw,
-      { gasLimit: 200000 }  // 适当提高gas限制
-    ).catch(error => {
-      // 解析错误信息
-      const revertReason = error.reason || 
-                         (error.data?.message ? error.data.message.split("reverted:")[1] : "") || 
-                         error.message;
-      throw new Error(`交易被拒绝: ${revertReason}`);
-    });
-    
-    showStatus('withdrawStatus', '交易已发送，等待确认...');
-    
-    const receipt = await tx.wait();
-    if (receipt.status === 0) throw new Error("交易执行失败");
-    
-    showStatus('withdrawStatus', `✓ 成功提取 ${amount} GGG`, 'success');
-    amountInput.value = '';
-    refreshBalances(); // 刷新余额显示
-    
-  } catch (error) {
-    console.error("GGG提取错误:", error);
-    showStatus('withdrawStatus', `❌ 提取失败: ${error.message}`, 'error');
-    
-    // 如果是授权问题，提示解决方法
-    if (error.message.includes("授权")) {
-      const fixBtn = document.createElement("button");
-      fixBtn.textContent = "点击授权合约使用GGG";
-      fixBtn.onclick = approveGGG;
-      fixBtn.style.marginLeft = "10px";
-      document.getElementById('withdrawStatus').appendChild(fixBtn);
-    }
-  }
-}
-
-// GGG授权函数
-async function approveGGG() {
-  try {
-    showStatus('withdrawStatus', '正在授权合约使用GGG...');
-    
-    const erc20ABI = ["function approve(address,uint256) returns (bool)"];
-    const gggToken = new ethers.Contract(gggTokenAddress, erc20ABI, signer);
-    
-    const tx = await gggToken.approve(
-      farmGameAddress,
-      ethers.constants.MaxUint256, // 授权最大数量
-      { gasLimit: 100000 }
-    );
-    
-    await tx.wait();
-    showStatus('withdrawStatus', '✓ 授权成功，请重试提取', 'success');
-    
-  } catch (error) {
-    showStatus('withdrawStatus', `❌ 授权失败: ${error.message}`, 'error');
-  }
-}
-
-    // 提取FGG
-// 提取FGG - 修复版本
-async function withdrawFGG() {
-  try {
-    const amountInput = document.getElementById('fggAmount');
-    const amount = amountInput.value;
-    
-    // 验证输入
-    if (!amount || isNaN(amount)) {
-      throw new Error("请输入有效的提取数量");
-    }
-    
-    // 检查所有者权限
-    const isOwner = await checkIsOwner();
-    if (!isOwner) {
-      throw new Error("只有合约所有者可以执行此操作");
-    }
-    
-    showStatus('withdrawStatus', '正在检查合约FGG余额...');
-    
-    // FGG代币ABI (只需要balanceOf方法)
-    const erc20ABI = [
-      {
-        "constant": true,
-        "inputs": [{"name": "_owner", "type": "address"}],
-        "name": "balanceOf",
-        "outputs": [{"name": "balance", "type": "uint256"}],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-      }
-    ];
-    
-    // 创建FGG代币合约实例
-    const fggToken = new ethers.Contract(fggTokenAddress, erc20ABI, signer);
-    
-    // 获取合约中的FGG余额
-    const contractBalance = await fggToken.balanceOf(farmGameAddress);
-    const amountToWithdraw = ethers.utils.parseUnits(amount, 18);
-    
-    // 检查余额是否足够
-    if (amountToWithdraw.gt(contractBalance)) {
-      const formattedBalance = ethers.utils.formatUnits(contractBalance, 18);
-      throw new Error(`合约FGG余额不足。当前余额: ${formattedBalance} FGG`);
-    }
-    
-    showStatus('withdrawStatus', '发送提取交易...');
-    
-    // 发送提取交易
-    const tx = await farmGameContract.withdrawFGG(
-      amountToWithdraw,
-      { gasLimit: 1000000 }  // 增加gas限制
-    ).catch(error => {
-      // 解析revert原因
-      if (error.data && error.data.message) {
-        throw new Error(`合约拒绝交易: ${error.data.message}`);
-      } else if (error.reason) {
-        throw new Error(`交易失败: ${error.reason}`);
-      } else {
-        throw new Error(`交易发送失败: ${error.message}`);
-      }
-    });
-    
-    showStatus('withdrawStatus', '交易已发送，等待确认... (可能需要几分钟)');
-    
-    // 等待交易确认
-    const receipt = await tx.wait();
-    
-    // 检查交易状态
-    if (receipt.status === 0) {
-      // 尝试获取revert原因
-      try {
-        const code = await provider.call({
-          to: tx.to,
-          data: tx.data
-        }, tx.blockNumber);
-        const reason = ethers.utils.toUtf8String("0x" + code.substr(138));
-        throw new Error(`交易执行失败: ${reason}`);
-      } catch (decodeError) {
-        throw new Error("交易执行失败，原因未知");
-      }
-    }
-    
-    showStatus('withdrawStatus', `✓ 成功提取 ${amount} FGG`, 'success');
-    
-    // 清空输入框
-    amountInput.value = '';
-    
-  } catch (error) {
-    console.error("提取FGG错误:", error);
-    showStatus('withdrawStatus', `❌ 提取失败: ${error.message}`, 'error');
-  }
-}
-
-    // 显示状态信息
-    function showStatus(elementId, message, type = '') {
-      const element = document.getElementById(elementId);
-      element.textContent = message;
-      element.className = 'status';
-      if (type) {
-        element.classList.add(type);
-      }
-    }
-  </script>
+        // 加载代币余额
+        async function loadTokenBalances() {
+            try {
+                const gggBalance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
+                const fggBalance = await fggTokenContract.methods.balanceOf(accounts[0]).call();
+                
+                document.getElementById('gggBalance').textContent = formatTokenAmount(gggBalance);
+                document.getElementById('fggBalance').textContent = formatTokenAmount(fggBalance);
+            } catch (error) {
+                console.error("Error loading token balances:", error);
+            }
+        }
+        
+        // 格式化代币金额
+        function formatTokenAmount(amount) {
+            return (amount / 10 ** 18).toFixed(2);
+        }
+        
+        // 加载用户的NFT
+        async function loadUserNFTs() {
+            try {
+                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
+                const nftContainer = document.getElementById('nftContainer');
+                nftContainer.innerHTML = '';
+                
+                if (balance === 0) {
+                    nftContainer.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--gray);">您还没有任何NFT，点击上方按钮购买盲盒开始游戏吧!</p>';
+                    return;
+                }
+                
+                // 获取所有NFT的tokenId
+                const tokenIds = [];
+                for (let i = 0; i < balance; i++) {
+                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                    tokenIds.push(tokenId);
+                }
+                
+                // 为每个NFT创建卡片
+                for (const tokenId of tokenIds) {
+                    await createNFTCard(tokenId);
+                }
+            } catch (error) {
+                console.error("Error loading user NFTs:", error);
+            }
+        }
+        
+        // 创建NFT卡片
+        async function createNFTCard(tokenId) {
+            try {
+                // 获取NFT信息
+                const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
+                const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
+                
+                // 解析tokenURI
+                const response = await fetch(tokenURI);
+                const metadata = await response.json();
+                
+                // 创建卡片元素
+                const nftCard = document.createElement('div');
+                nftCard.className = 'nft-card';
+                nftCard.dataset.tokenId = tokenId;
+                
+                // 卡片内容
+                let cardContent = `
+                    <img src="${metadata.image}" alt="NFT" class="nft-image">
+                    <div class="nft-info">
+                        <h3 class="nft-name">${metadata.name}</h3>
+                        <p class="nft-type">${NFT_TYPES[nftInfo.nftType]?.name || '未知类型'}</p>
+                `;
+                
+                // 如果是盲盒
+                if (!nftInfo.isOpened) {
+                    cardContent += `
+                        <div class="nft-actions">
+                            <button class="nft-btn primary open-blindbox-btn">
+                                <i class="fas fa-gift"></i> 开启盲盒
+                            </button>
+                        </div>
+                    `;
+                    
+                    // 添加盲盒悬停效果
+                    cardContent += `
+                        <div class="blindbox-overlay">
+                            <h3>神秘盲盒</h3>
+                            <p>点击开启盲盒，随机获得一个奶牛或牧场NFT</p>
+                            <button class="nft-btn primary open-blindbox-btn">
+                                <i class="fas fa-gift"></i> 开启盲盒
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // 获取收获信息
+                    const [harvestAmount, isGGG] = await farmGameContract.methods.calculateHarvestAmount(tokenId).call();
+                    
+                    cardContent += `
+                        <div class="nft-stats">
+                            <div class="nft-stat">
+                                <h4>产出率</h4>
+                                <p>${isGGG ? (harvestAmount > 0 ? formatTokenAmount(harvestAmount) + ' GGG/h' : '无') : (harvestAmount > 0 ? formatTokenAmount(harvestAmount) + ' FGG/d' : '无')}</p>
+                            </div>
+                            <div class="nft-stat">
+                                <h4>状态</h4>
+                                <p>${harvestAmount > 0 ? '可收获' : '需喂养'}</p>
+                            </div>
+                        </div>
+                        <div class="nft-actions">
+                            <button class="nft-btn primary harvest-btn">
+                                <i class="fas fa-hand-holding-water"></i> 收获
+                            </button>
+                            <button class="nft-btn secondary feed-btn">
+                                <i class="fas fa-utensils"></i> 喂养
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                cardContent += `</div>`;
+                nftCard.innerHTML = cardContent;
+                
+                // 添加到容器
+                document.getElementById('nftContainer').appendChild(nftCard);
+                
+                // 添加事件监听器
+                if (!nftInfo.isOpened) {
+                    nftCard.querySelector('.open-blindbox-btn').addEventListener('click', () => showOpenBlindboxModal(tokenId));
+                } else {
+                    nftCard.querySelector('.harvest-btn').addEventListener('click', () => showHarvestModal(tokenId));
+                    nftCard.querySelector('.feed-btn').addEventListener('click', () => feedNFT(tokenId));
+                }
+            } catch (error) {
+                console.error(`Error creating NFT card for token ${tokenId}:`, error);
+            }
+        }
+        
+        // 显示开启盲盒模态框
+        function showOpenBlindboxModal(tokenId) {
+            currentOpenTokenId = tokenId;
+            document.getElementById('openBlindboxModal').classList.add('active');
+        }
+        
+        // 开启盲盒
+        async function openBlindBox() {
+            if (!currentOpenTokenId) return;
+            
+            const modal = document.getElementById('openBlindboxModal');
+            const confirmBtn = document.getElementById('confirmOpen');
+            const originalText = confirmBtn.textContent;
+            
+            try {
+                // 更新按钮状态
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<span class="loading"></span>处理中...';
+                
+                // 调用合约
+                await farmGameContract.methods.openBlindBox(currentOpenTokenId).send({
+                    from: accounts[0]
+                });
+                
+                // 关闭模态框
+                modal.classList.remove('active');
+                
+                // 显示结果
+                await showBlindboxResult(currentOpenTokenId);
+                
+                // 重新加载NFT
+                await loadUserNFTs();
+            } catch (error) {
+                console.error("Error opening blindbox:", error);
+                alert("开启盲盒失败: " + error.message);
+            } finally {
+                // 重置按钮
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = originalText;
+                currentOpenTokenId = null;
+            }
+        }
+        
+        // 显示盲盒结果
+        async function showBlindboxResult(tokenId) {
+            try {
+                const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
+                const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
+                
+                // 解析tokenURI
+                const response = await fetch(tokenURI);
+                const metadata = await response.json();
+                
+                // 更新模态框内容
+                document.getElementById('resultImage').src = metadata.image;
+                document.getElementById('resultType').textContent = `您获得了: ${NFT_TYPES[nftInfo.nftType]?.name || '未知类型'}`;
+                
+                // 显示模态框
+                document.getElementById('blindboxResultModal').classList.add('active');
+            } catch (error) {
+                console.error("Error showing blindbox result:", error);
+            }
+        }
+        
+        // 显示收获确认模态框
+        async function showHarvestModal(tokenId) {
+            currentHarvestTokenId = tokenId;
+            
+            try {
+                const [amount, isGGG] = await farmGameContract.methods.calculateHarvestAmount(tokenId).call();
+                
+                if (amount === 0) {
+                    alert("当前没有可收获的代币");
+                    return;
+                }
+                
+                document.getElementById('harvestAmount').textContent = 
+                    `您将收获 ${formatTokenAmount(amount)} ${isGGG ? 'GGG' : 'FGG'}`;
+                document.getElementById('harvestModal').classList.add('active');
+            } catch (error) {
+                console.error("Error calculating harvest amount:", error);
+            }
+        }
+        
+        // 收获NFT
+        async function harvestNFT() {
+            if (!currentHarvestTokenId) return;
+            
+            const modal = document.getElementById('harvestModal');
+            const confirmBtn = document.getElementById('confirmHarvest');
+            const originalText = confirmBtn.textContent;
+            
+            try {
+                // 更新按钮状态
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<span class="loading"></span>处理中...';
+                
+                // 调用合约
+                await farmGameContract.methods.harvest(currentHarvestTokenId).send({
+                    from: accounts[0]
+                });
+                
+                // 关闭模态框
+                modal.classList.remove('active');
+                
+                // 重新加载数据
+                await loadTokenBalances();
+                await loadUserNFTs();
+                
+                alert("收获成功!");
+            } catch (error) {
+                console.error("Error harvesting NFT:", error);
+                alert("收获失败: " + error.message);
+            } finally {
+                // 重置按钮
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = originalText;
+                currentHarvestTokenId = null;
+            }
+        }
+        
+        // 喂养NFT
+        async function feedNFT(tokenId) {
+            const feedBtn = document.querySelector(`.nft-card[data-token-id="${tokenId}"] .feed-btn`);
+            const originalText = feedBtn.textContent;
+            
+            try {
+                // 更新按钮状态
+                feedBtn.disabled = true;
+                feedBtn.innerHTML = '<span class="loading"></span>处理中...';
+                
+                // 调用合约
+                await farmGameContract.methods.feed(tokenId).send({
+                    from: accounts[0]
+                });
+                
+                // 重新加载NFT
+                await loadUserNFTs();
+                
+                alert("喂养成功!");
+            } catch (error) {
+                console.error("Error feeding NFT:", error);
+                alert("喂养失败: " + error.message);
+            } finally {
+                // 重置按钮
+                if (feedBtn) {
+                    feedBtn.disabled = false;
+                    feedBtn.textContent = originalText;
+                }
+            }
+        }
+        
+        // 购买盲盒
+        async function purchaseBlindBox() {
+            const buyBtn = document.getElementById('buyBlindBox');
+            const originalText = buyBtn.textContent;
+            
+            try {
+                // 更新按钮状态
+                buyBtn.disabled = true;
+                buyBtn.innerHTML = '<span class="loading"></span>处理中...';
+                
+                // 检查余额
+                const gggBalance = await gggTokenContract.methods.balanceOf(accounts[0]).call();
+                const blindBoxPrice = await farmGameContract.methods.blindBoxPrice().call();
+                
+                if (gggBalance < blindBoxPrice) {
+                    throw new Error("GGG余额不足");
+                }
+                
+                // 检查授权
+                const allowance = await gggTokenContract.methods.allowance(accounts[0], FARM_GAME_ADDRESS).call();
+                if (allowance < blindBoxPrice) {
+                    await gggTokenContract.methods.approve(FARM_GAME_ADDRESS, blindBoxPrice).send({
+                        from: accounts[0]
+                    });
+                }
+                
+                // 调用合约
+                await farmGameContract.methods.purchaseBlindBox().send({
+                    from: accounts[0]
+                });
+                
+                // 重新加载数据
+                await loadTokenBalances();
+                await loadUserNFTs();
+                
+                alert("盲盒购买成功!");
+            } catch (error) {
+                console.error("Error purchasing blindbox:", error);
+                alert("购买盲盒失败: " + error.message);
+            } finally {
+                // 重置按钮
+                buyBtn.disabled = false;
+                buyBtn.textContent = originalText;
+            }
+        }
+        
+        // 一键收获所有NFT
+        async function harvestAllNFTs() {
+            const harvestAllBtn = document.getElementById('harvestAll');
+            const originalText = harvestAllBtn.textContent;
+            
+            try {
+                // 更新按钮状态
+                harvestAllBtn.disabled = true;
+                harvestAllBtn.innerHTML = '<span class="loading"></span>处理中...';
+                
+                // 获取所有NFT
+                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
+                if (balance === 0) {
+                    alert("您还没有任何NFT");
+                    return;
+                }
+                
+                // 获取所有可收获的NFT
+                const tokenIds = [];
+                for (let i = 0; i < balance; i++) {
+                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                    const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
+                    
+                    if (nftInfo.isOpened) {
+                        const [amount] = await farmGameContract.methods.calculateHarvestAmount(tokenId).call();
+                        if (amount > 0) {
+                            tokenIds.push(tokenId);
+                        }
+                    }
+                }
+                
+                if (tokenIds.length === 0) {
+                    alert("当前没有可收获的NFT");
+                    return;
+                }
+                
+                // 批量收获
+                for (const tokenId of tokenIds) {
+                    try {
+                        await farmGameContract.methods.harvest(tokenId).send({
+                            from: accounts[0]
+                        });
+                    } catch (error) {
+                        console.error(`Error harvesting token ${tokenId}:`, error);
+                    }
+                }
+                
+                // 重新加载数据
+                await loadTokenBalances();
+                await loadUserNFTs();
+                
+                alert(`成功收获 ${tokenIds.length} 个NFT!`);
+            } catch (error) {
+                console.error("Error harvesting all NFTs:", error);
+                alert("一键收获失败: " + error.message);
+            } finally {
+                // 重置按钮
+                harvestAllBtn.disabled = false;
+                harvestAllBtn.textContent = originalText;
+            }
+        }
+        
+        // 一键喂养所有NFT
+        async function feedAllNFTs() {
+            const feedAllBtn = document.getElementById('feedAll');
+            const originalText = feedAllBtn.textContent;
+            
+            try {
+                // 更新按钮状态
+                feedAllBtn.disabled = true;
+                feedAllBtn.innerHTML = '<span class="loading"></span>处理中...';
+                
+                // 获取所有NFT
+                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
+                if (balance === 0) {
+                    alert("您还没有任何NFT");
+                    return;
+                }
+                
+                // 获取所有需要喂养的NFT
+                const tokenIds = [];
+                for (let i = 0; i < balance; i++) {
+                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                    const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
+                    
+                    if (nftInfo.isOpened) {
+                        tokenIds.push(tokenId);
+                    }
+                }
+                
+                if (tokenIds.length === 0) {
+                    alert("当前没有需要喂养的NFT");
+                    return;
+                }
+                
+                // 检查授权
+                const gggAllowance = await gggTokenContract.methods.allowance(accounts[0], FARM_GAME_ADDRESS).call();
+                const fggAllowance = await fggTokenContract.methods.allowance(accounts[0], FARM_GAME_ADDRESS).call();
+                
+                if (gggAllowance === 0) {
+                    await gggTokenContract.methods.approve(FARM_GAME_ADDRESS, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff').send({
+                        from: accounts[0]
+                    });
+                }
+                
+                if (fggAllowance === 0) {
+                    await fggTokenContract.methods.approve(FARM_GAME_ADDRESS, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff').send({
+                        from: accounts[0]
+                    });
+                }
+                
+                // 批量喂养
+                for (const tokenId of tokenIds) {
+                    try {
+                        await farmGameContract.methods.feed(tokenId).send({
+                            from: accounts[0]
+                        });
+                    } catch (error) {
+                        console.error(`Error feeding token ${tokenId}:`, error);
+                    }
+                }
+                
+                // 重新加载NFT
+                await loadUserNFTs();
+                
+                alert(`成功喂养 ${tokenIds.length} 个NFT!`);
+            } catch (error) {
+                console.error("Error feeding all NFTs:", error);
+                alert("一键喂养失败: " + error.message);
+            } finally {
+                // 重置按钮
+                feedAllBtn.disabled = false;
+                feedAllBtn.textContent = originalText;
+            }
+        }
+        
+        // 初始化应用
+        window.addEventListener('load', initApp);
+    </script>
 </body>
 </html>
