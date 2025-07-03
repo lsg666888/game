@@ -1048,7 +1048,7 @@ async function loadNFTs() {
         
     } catch (error) {
         console.error("Error loading NFTs:", error);
-        nftContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><div>加载NFT失败</div></div>';
+        nftContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><div>加载NFT失败1</div></div>';
     }
 }
 
