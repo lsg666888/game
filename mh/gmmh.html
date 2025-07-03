@@ -5,12 +5,485 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>农场游戏盲盒</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="styles.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f6fa;
+            color: #2d3436;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 36px;
+            font-weight: 700;
+            color: #00b894;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #636e72;
+        }
+        
+        .wallet-status {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .wallet-status i {
+            margin-right: 10px;
+        }
+        
+        .wallet-connecting {
+            display: none;
+            color: #0984e3;
+        }
+        
+        .wallet-connected {
+            display: none;
+            color: #00b894;
+        }
+        
+        .wallet-error {
+            display: none;
+            color: #d63031;
+        }
+        
+        .balance-card {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+        
+        .token-balance {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .token-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #fdcb6e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            color: #fff;
+            margin-right: 15px;
+        }
+        
+        .token-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .token-name {
+            font-size: 14px;
+            color: #636e72;
+        }
+        
+        .token-amount {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2d3436;
+        }
+        
+        .blindbox-section {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        
+        .blindbox-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .blindbox {
+            width: 250px;
+            height: 250px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+            cursor: pointer;
+        }
+        
+        .blindbox.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .blindbox-front, .blindbox-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+        }
+        
+        .blindbox-back {
+            transform: rotateY(180deg);
+            background-color: #f8f9fa;
+        }
+        
+        .blindbox-image {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+        
+        .blindbox-price {
+            font-size: 18px;
+            font-weight: 600;
+            color: #00b894;
+        }
+        
+        .nft-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .nft-type {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 30px;
+            background-color: #00b894;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:hover {
+            background-color: #00a884;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            background-color: #b2bec3;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+        
+        .btn-secondary {
+            background-color: #6c5ce7;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5d4aec;
+        }
+        
+        .my-nfts {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #dfe6e9;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #636e72;
+            position: relative;
+        }
+        
+        .tab.active {
+            color: #00b894;
+            font-weight: 600;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #00b894;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .nft-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .nft-card {
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        
+        .nft-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nft-card-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        
+        .nft-card-name {
+            padding: 10px 15px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .nft-card-type {
+            padding: 5px 15px;
+            margin: 0 15px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            padding: 30px;
+            position: relative;
+            text-align: center;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #636e72;
+        }
+        
+        .modal-image {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            margin: 0 auto 20px;
+            border-radius: 10px;
+        }
+        
+        .modal-title {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #2d3436;
+        }
+        
+        .modal-text {
+            color: #636e72;
+            margin-bottom: 20px;
+        }
+        
+        .rarity-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #dfe6e9;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+        
+        .rarity-fill {
+            height: 100%;
+            width: 0;
+            transition: width 0.5s;
+        }
+        
+        .rarity-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #636e72;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #00b894;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #fdcb6e;
+            opacity: 0;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 999;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .balance-card {
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .nft-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="logo">2FarmGame</div>
+            <div class="logo">1FarmGame</div>
             <div class="subtitle">收集、养殖、收获无限乐趣</div>
         </header>
         
@@ -133,7 +606,6 @@
         
         // 合约ABI和地址
         const farmGameABI = [
-            // 获取用户NFT余额
             {
                 "inputs": [{"internalType": "address", "name": "owner", "type": "address"}],
                 "name": "balanceOf",
@@ -141,7 +613,6 @@
                 "stateMutability": "view",
                 "type": "function"
             },
-            // 获取用户拥有的NFT ID
             {
                 "inputs": [
                     {"internalType": "address", "name": "owner", "type": "address"},
@@ -152,7 +623,6 @@
                 "stateMutability": "view",
                 "type": "function"
             },
-            // 获取NFT元数据URI
             {
                 "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
                 "name": "tokenURI",
@@ -160,7 +630,6 @@
                 "stateMutability": "view",
                 "type": "function"
             },
-            // 获取NFT详细信息
             {
                 "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
                 "name": "nftInfos",
@@ -173,7 +642,6 @@
                 "stateMutability": "view",
                 "type": "function"
             },
-            // 获取盲盒价格
             {
                 "inputs": [],
                 "name": "blindBoxPrice",
@@ -181,7 +649,6 @@
                 "stateMutability": "view",
                 "type": "function"
             },
-            // 购买盲盒
             {
                 "inputs": [],
                 "name": "purchaseBlindBox",
@@ -189,7 +656,6 @@
                 "stateMutability": "nonpayable",
                 "type": "function"
             },
-            // 开启盲盒
             {
                 "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
                 "name": "openBlindBox",
@@ -199,9 +665,7 @@
             }
         ];
 
-        // 精简后的GGGToken合约ABI
         const gggTokenABI = [
-            // 查询余额
             {
                 "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
                 "name": "balanceOf",
@@ -209,7 +673,6 @@
                 "stateMutability": "view",
                 "type": "function"
             },
-            // 授权代币
             {
                 "inputs": [
                     {"internalType": "address", "name": "spender", "type": "address"},
@@ -220,7 +683,6 @@
                 "stateMutability": "nonpayable",
                 "type": "function"
             },
-            // 授权额度查询
             {
                 "inputs": [
                     {"internalType": "address", "name": "owner", "type": "address"},
@@ -233,9 +695,7 @@
             }
         ];
 
-        // 精简后的FGGToken合约ABI
         const fggTokenABI = [
-            // 查询余额
             {
                 "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
                 "name": "balanceOf",
@@ -245,9 +705,9 @@
             }
         ];
         
-        const farmGameAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c"; // 填入FarmGame合约地址
-        const gggTokenAddress = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b"; // 填入GGGToken合约地址
-        const fggTokenAddress = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9"; // 填入FGGToken合约地址
+        const farmGameAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c";
+        const gggTokenAddress = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b";
+        const fggTokenAddress = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9";
         
         // NFT类型配置
         const nftTypes = {
@@ -298,6 +758,47 @@
             document.getElementById('transaction-modal').classList.remove('active');
         }
         
+        // 获取交易失败原因
+        async function getTransactionErrorReason(txHash) {
+            try {
+                const tx = await web3.eth.getTransaction(txHash);
+                const result = await web3.eth.call(tx, tx.blockNumber);
+                
+                if (result.startsWith('0x08c379a0')) {
+                    return web3.utils.toAscii('0x' + result.substr(138));
+                }
+                return "未知原因";
+            } catch (error) {
+                console.error("获取交易失败原因错误:", error);
+                return "无法获取失败原因";
+            }
+        }
+        
+        // 处理合约错误
+        async function handleContractError(error) {
+            console.error("合约错误:", error);
+            
+            let errorMessage = '合约执行失败';
+            
+            if (error.message.includes('User denied transaction')) {
+                errorMessage = '用户取消了交易';
+            } else if (error.message.includes('execution reverted')) {
+                if (error.receipt && error.receipt.transactionHash) {
+                    const reason = await getTransactionErrorReason(error.receipt.transactionHash);
+                    errorMessage = `交易被拒绝: ${reason}`;
+                } else {
+                    errorMessage = '交易被拒绝: 合约条件不满足';
+                }
+            } else if (error.message.includes('insufficient funds')) {
+                errorMessage = 'Gas费用不足';
+            } else if (error.message.includes('Nonce too high')) {
+                errorMessage = '交易nonce值过高，请重置钱包';
+            }
+            
+            showStatus('error', errorMessage);
+            hideTransactionModal();
+        }
+        
         // 初始化应用
         async function initApp() {
             showStatus('connecting');
@@ -308,6 +809,13 @@
                 try {
                     // 请求账户访问
                     accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    // 检查网络
+                    const chainId = await web3.eth.getChainId();
+                    if (chainId !== 56) { // BSC主网chainId为56
+                        showStatus('error', '请切换到Binance Smart Chain主网');
+                        return;
+                    }
                     
                     // 初始化合约
                     farmGameContract = new web3.eth.Contract(farmGameABI, farmGameAddress);
@@ -338,8 +846,8 @@
                     });
                     
                 } catch (error) {
-                    console.error("User denied account access", error);
-                    showStatus('error', '用户拒绝了钱包访问请求');
+                    console.error("初始化错误:", error);
+                    showStatus('error', '初始化失败: ' + (error.message || '未知错误'));
                     resetUI();
                 }
             } else {
@@ -373,64 +881,69 @@
                 await loadOwnedNFTs();
                 
             } catch (error) {
-                console.error("Error loading user data:", error);
+                console.error("加载用户数据错误:", error);
                 showStatus('error', '加载用户数据失败');
             }
         }
         
         // 加载用户拥有的NFT
         async function loadOwnedNFTs() {
-            const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
-            ownedNFTs = [];
-            
-            const openedGrid = document.getElementById('opened-nft-grid');
-            const unopenedGrid = document.getElementById('unopened-nft-grid');
-            openedGrid.innerHTML = '';
-            unopenedGrid.innerHTML = '';
-            
-            for (let i = 0; i < balance; i++) {
-                const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
-                const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
-                const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
+            try {
+                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
+                ownedNFTs = [];
                 
-                // 解析tokenURI获取图像
-                const metadata = JSON.parse(atob(tokenURI.split(',')[1]));
+                const openedGrid = document.getElementById('opened-nft-grid');
+                const unopenedGrid = document.getElementById('unopened-nft-grid');
+                openedGrid.innerHTML = '';
+                unopenedGrid.innerHTML = '';
                 
-                ownedNFTs.push({
-                    tokenId: tokenId,
-                    type: nftInfo.nftType,
-                    isOpened: nftInfo.isOpened,
-                    image: metadata.image,
-                    name: metadata.name
-                });
-                
-                // 创建NFT卡片
-                const nftCard = document.createElement('div');
-                nftCard.className = 'nft-card';
-                
-                if (nftInfo.isOpened) {
-                    // 已开启的NFT
-                    nftCard.innerHTML = `
-                        <img src="${metadata.image}" class="nft-card-image">
-                        <div class="nft-card-name">${metadata.name}</div>
-                        <div class="nft-card-type" style="background-color: ${nftTypes[nftInfo.nftType].color}20; color: ${nftTypes[nftInfo.nftType].color}">
-                            ${nftTypes[nftInfo.nftType].name}
-                        </div>
-                    `;
-                    nftCard.addEventListener('click', () => viewNFTDetails(tokenId));
-                    openedGrid.appendChild(nftCard);
-                } else {
-                    // 未开启的盲盒
-                    nftCard.innerHTML = `
-                        <img src="https://raw.githubusercontent.com/lsg666888/token-logo/refs/heads/main/manghe.png" class="nft-card-image">
-                        <div class="nft-card-name">未开启盲盒</div>
-                        <div class="nft-card-type" style="background-color: #6c5ce720; color: #6c5ce7">
-                            神秘盲盒
-                        </div>
-                    `;
-                    nftCard.addEventListener('click', () => prepareOpenBlindBox(tokenId));
-                    unopenedGrid.appendChild(nftCard);
+                for (let i = 0; i < balance; i++) {
+                    const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], i).call();
+                    const tokenURI = await farmGameContract.methods.tokenURI(tokenId).call();
+                    const nftInfo = await farmGameContract.methods.nftInfos(tokenId).call();
+                    
+                    // 解析tokenURI获取图像
+                    const metadata = JSON.parse(atob(tokenURI.split(',')[1]));
+                    
+                    ownedNFTs.push({
+                        tokenId: tokenId,
+                        type: nftInfo.nftType,
+                        isOpened: nftInfo.isOpened,
+                        image: metadata.image,
+                        name: metadata.name
+                    });
+                    
+                    // 创建NFT卡片
+                    const nftCard = document.createElement('div');
+                    nftCard.className = 'nft-card';
+                    
+                    if (nftInfo.isOpened) {
+                        // 已开启的NFT
+                        nftCard.innerHTML = `
+                            <img src="${metadata.image}" class="nft-card-image">
+                            <div class="nft-card-name">${metadata.name}</div>
+                            <div class="nft-card-type" style="background-color: ${nftTypes[nftInfo.nftType].color}20; color: ${nftTypes[nftInfo.nftType].color}">
+                                ${nftTypes[nftInfo.nftType].name}
+                            </div>
+                        `;
+                        nftCard.addEventListener('click', () => viewNFTDetails(tokenId));
+                        openedGrid.appendChild(nftCard);
+                    } else {
+                        // 未开启的盲盒
+                        nftCard.innerHTML = `
+                            <img src="https://raw.githubusercontent.com/lsg666888/token-logo/refs/heads/main/manghe.png" class="nft-card-image">
+                            <div class="nft-card-name">未开启盲盒</div>
+                            <div class="nft-card-type" style="background-color: #6c5ce720; color: #6c5ce7">
+                                神秘盲盒
+                            </div>
+                        `;
+                        nftCard.addEventListener('click', () => prepareOpenBlindBox(tokenId));
+                        unopenedGrid.appendChild(nftCard);
+                    }
                 }
+            } catch (error) {
+                console.error("加载NFT错误:", error);
+                showStatus('error', '加载NFT失败');
             }
         }
         
@@ -459,7 +972,11 @@
                 
                 const approveTx = await gggTokenContract.methods
                     .approve(farmGameAddress, price)
-                    .send({ from: accounts[0] });
+                    .send({ 
+                        from: accounts[0],
+                        gas: 200000,
+                        gasPrice: web3.utils.toWei('5', 'gwei')
+                    });
                 
                 if (approveTx.status) {
                     hideTransactionModal();
@@ -470,9 +987,7 @@
                     return false;
                 }
             } catch (error) {
-                hideTransactionModal();
-                console.error("Error approving GGG:", error);
-                showStatus('error', '授权GGG代币失败: ' + (error.message || '未知错误'));
+                await handleContractError(error);
                 return false;
             }
         }
@@ -480,6 +995,10 @@
         // 购买盲盒
         async function purchaseBlindBox() {
             try {
+                // 禁用按钮防止重复点击
+                const purchaseBtn = document.getElementById('purchase-btn');
+                purchaseBtn.disabled = true;
+                
                 showTransactionModal('购买盲盒', '正在处理您的购买请求...');
                 
                 // 获取盲盒价格
@@ -490,16 +1009,24 @@
                 if (Number(balance) < Number(price)) {
                     hideTransactionModal();
                     showStatus('error', 'GGG余额不足');
+                    purchaseBtn.disabled = false;
                     return;
                 }
                 
                 // 检查并授权GGG代币
                 const isApproved = await checkAndApproveGGG(price);
-                if (!isApproved) return;
+                if (!isApproved) {
+                    purchaseBtn.disabled = false;
+                    return;
+                }
                 
                 // 购买盲盒
                 showTransactionModal('购买盲盒', '正在处理您的购买交易...');
-                const purchaseTx = await farmGameContract.methods.purchaseBlindBox().send({ from: accounts[0] });
+                const purchaseTx = await farmGameContract.methods.purchaseBlindBox().send({ 
+                    from: accounts[0],
+                    gas: 300000,
+                    gasPrice: web3.utils.toWei('5', 'gwei')
+                });
                 
                 // 交易成功后处理
                 if (purchaseTx.status) {
@@ -524,21 +1051,11 @@
                     hideTransactionModal();
                     showStatus('error', '购买失败: 交易未成功');
                 }
+                
+                purchaseBtn.disabled = false;
             } catch (error) {
-                hideTransactionModal();
-                console.error("Error purchasing blind box:", error);
-                
-                // 改进错误提示
-                let errorMessage = '购买失败';
-                if (error.message.includes('User denied transaction')) {
-                    errorMessage = '用户取消了交易';
-                } else if (error.message.includes('execution reverted')) {
-                    errorMessage = '合约执行失败';
-                } else if (error.message.includes('insufficient funds')) {
-                    errorMessage = '余额不足';
-                }
-                
-                showStatus('error', errorMessage);
+                await handleContractError(error);
+                document.getElementById('purchase-btn').disabled = false;
             }
         }
         
@@ -547,10 +1064,18 @@
             if (!currentTokenId) return;
             
             try {
+                // 禁用按钮防止重复点击
+                const openBtn = document.getElementById('open-btn');
+                openBtn.disabled = true;
+                
                 showTransactionModal('开启盲盒', '正在开启您的盲盒...');
                 
                 // 开启盲盒
-                const openTx = await farmGameContract.methods.openBlindBox(currentTokenId).send({ from: accounts[0] });
+                const openTx = await farmGameContract.methods.openBlindBox(currentTokenId).send({ 
+                    from: accounts[0],
+                    gas: 300000,
+                    gasPrice: web3.utils.toWei('5', 'gwei')
+                });
                 
                 if (openTx.status) {
                     // 获取NFT信息
@@ -584,19 +1109,10 @@
                     showStatus('error', '开启失败: 交易未成功');
                 }
                 
+                openBtn.disabled = false;
             } catch (error) {
-                hideTransactionModal();
-                console.error("Error opening blind box:", error);
-                
-                // 改进错误提示
-                let errorMessage = '开启失败';
-                if (error.message.includes('User denied transaction')) {
-                    errorMessage = '用户取消了交易';
-                } else if (error.message.includes('execution reverted')) {
-                    errorMessage = '合约执行失败';
-                }
-                
-                showStatus('error', errorMessage);
+                await handleContractError(error);
+                document.getElementById('open-btn').disabled = false;
             }
         }
         
@@ -611,6 +1127,9 @@
             document.getElementById('rarity-fill').style.width = `${100 - rarity}%`;
             document.getElementById('rarity-fill').style.background = nftTypes[nftType].color;
             document.getElementById('rarity-percent').textContent = `${rarity}%`;
+            
+            document.getElementById('modal-action-btn').textContent = '确定';
+            document.getElementById('modal-action-btn').onclick = closeModal;
             
             modal.classList.add('active');
         }
