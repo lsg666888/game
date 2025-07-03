@@ -969,6 +969,56 @@ async function initApp() {
     }
 }
 
+async function buyCow(cowType) {
+    if (!farmGameContract || accounts.length === 0) return;
+    
+    try {
+        // 显示加载状态
+        showLoading(`正在购买${getCowName(cowType)}...`);
+        
+        // 根据不同类型设置价格
+        let price;
+        switch(cowType) {
+            case 1: // 普通奶牛
+                price = web3.utils.toWei('1', 'ether');
+                break;
+            case 2: // 黄金奶牛
+                price = web3.utils.toWei('5', 'ether');
+                break;
+            case 3: // 稀有奶牛
+                price = web3.utils.toWei('10', 'ether');
+                break;
+            default:
+                throw new Error('未知奶牛类型');
+        }
+        
+        // 调用购买函数
+        await farmGameContract.methods.purchaseBlindBox().send({
+            from: accounts[0],
+            value: price
+        });
+        
+        // 显示购买成功
+        showSuccess(`成功购买${getCowName(cowType)}!`);
+        
+        // 刷新NFT列表
+        nftCache.clear(accounts[0]);
+        await loadNFTs();
+        
+    } catch (error) {
+        console.error("购买失败:", error);
+        showError(`购买失败: ${error.message}`);
+    } finally {
+        hideLoading();
+    }
+}
+
+// 辅助函数：获取奶牛名称
+function getCowName(cowType) {
+    const names = ['', '普通奶牛', '黄金奶牛', '稀有奶牛'];
+    return names[cowType] || '未知奶牛';
+}
+
 // 新增：显示盲盒概率信息
 function updateBlindboxInfo() {
     const infoContainer = document.createElement('div');
