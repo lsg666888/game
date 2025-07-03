@@ -1,371 +1,1866 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的NFT收藏 - FarmGame</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="styles2.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3农场游戏 - 我的NFT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+    header {
+      background-color: #2c3e50;
+      padding: 15px;
+      text-align: center;
+      color: #fff;
+    }
+    h1 {
+      margin: 0;
+    }
+    #wallet-connect {
+      margin-top: 10px;
+      background-color: #3498db;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #wallet-connect:hover {
+      background-color: #2980b9;
+    }
+    .nft-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+    }
+    .nft-card {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      margin: 10px;
+      padding: 10px;
+      width: 200px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .nft-card img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .nft-card button {
+      background-color: #27ae60;
+      color: white;
+      padding: 8px;
+      border-radius: 5px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .nft-card button:hover {
+      background-color: #2ecc71;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">FarmGame</div>
-            <div class="subtitle">我的NFT收藏</div>
-        </header>
-        
-        <div class="wallet-status" id="wallet-status">
-            <div class="wallet-connecting">连接中...</div>
-            <div class="wallet-connected">
-                <i>✅</i> 钱包已连接
-            </div>
-            <div class="wallet-error">
-                <i>❌</i> <span id="error-message">钱包连接失败</span>
-            </div>
-        </div>
-        
-        <div class="balance-card">
-            <div class="token-balance">
-                <div class="token-icon">GGG</div>
-                <div class="token-info">
-                    <span class="token-name">游戏金币</span>
-                    <span class="token-amount" id="ggg-balance">0</span>
-                </div>
-            </div>
-            <div class="token-balance">
-                <div class="token-icon">FGG</div>
-                <div class="token-info">
-                    <span class="token-name">饲料金币</span>
-                    <span class="token-amount" id="fgg-balance">0</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="nft-collection">
-            <div class="section-title">
-                <i>🖼️</i>我的NFT收藏
-            </div>
-            <div class="nft-grid" id="nft-grid">
-                <div class="loading">加载中...</div>
-            </div>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
-    <script>
-        // 初始化Web3
-        let web3;
-        let farmGameContract;
-        let gggTokenContract;
-        let fggTokenContract;
-        let accounts = [];
-        let ownedNFTs = [];
-        
-        // 合约ABI和地址
-        const farmGameABI = [
-            {
-                "inputs": [{"internalType": "address", "name": "owner", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "owner", "type": "address"},
-                    {"internalType": "uint256", "name": "index", "type": "uint256"}
-                ],
-                "name": "tokenOfOwnerByIndex",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
-                "name": "tokenURI",
-                "outputs": [{"internalType": "string", "name": "", "type": "string"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "name": "nftInfos",
-                "outputs": [
-                    {"internalType": "enum FarmGame.NFTType", "name": "nftType", "type": "uint8"},
-                    {"internalType": "uint256", "name": "lastHarvestTime", "type": "uint256"},
-                    {"internalType": "uint256", "name": "lastFeedTime", "type": "uint256"},
-                    {"internalType": "bool", "name": "isOpened", "type": "bool"}
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
+<header>
+  <h1>3农场游戏 - 我的NFT</h1>
+  <div id="wallet-connect">连接钱包</div>
+</header>
 
-        const gggTokenABI = [
-            {
-                "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
+<div class="nft-container" id="nft-container"></div>
 
-        const fggTokenABI = [
-            {
-                "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
-        
-        const farmGameAddress = "0xc8De5C417a708a5B3ad2508eca4e93004fa2246c";
-        const gggTokenAddress = "0x2de53b9a3282eeab1392d8ec4e33d5784e54850b";
-        const fggTokenAddress = "0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9";
-        
-        // NFT类型配置
-        const nftTypes = {
-            0: { name: "普通奶牛", rarity: 40, color: "#00ceff" },
-            1: { name: "黄金奶牛", rarity: 9, color: "#fdcb6e" },
-            2: { name: "稀有奶牛", rarity: 1, color: "#e84393" },
-            3: { name: "初级牧场", rarity: 40, color: "#00b894" },
-            4: { name: "中级牧场", rarity: 9, color: "#0984e3" },
-            5: { name: "高级牧场", rarity: 1, color: "#6c5ce7" }
-        };
-        
-        // 显示状态函数
-        function showStatus(type, message = '') {
-            const statusElements = {
-                connecting: document.querySelector('.wallet-connecting'),
-                connected: document.querySelector('.wallet-connected'),
-                error: document.querySelector('.wallet-error')
-            };
-            
-            Object.values(statusElements).forEach(el => el.style.display = 'none');
-            
-            if (type === 'connecting') {
-                statusElements.connecting.style.display = 'flex';
-            } else if (type === 'connected') {
-                statusElements.connected.style.display = 'flex';
-                if (message) statusElements.connected.innerHTML = `<i>✅</i> ${message}`;
-            } else if (type === 'error') {
-                statusElements.error.style.display = 'flex';
-                if (message) document.getElementById('error-message').textContent = message;
-            }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+<script>
+  const contractAddress = '0xc8De5C417a708a5B3ad2508eca4e93004fa2246c'; // 替换为你的合约地址
+  const gggTokenAddress = '0x2de53b9a3282eeab1392d8ec4e33d5784e54850b'; // 替换为GGG代币合约地址
+  const fggTokenAddress = '0xe0c9bddfffcb38cd4f795bcccda5fcd615d4aeb9'; // 替换为FGG代币合约地址
+  const nftContractABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "gggTokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "fggTokenAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721IncorrectOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721InsufficientApproval",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOperator",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC721InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC721NonexistentToken",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "approved",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "ApprovalForAll",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			}
+		],
+		"name": "BlindBoxOpened",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "BlindBoxPurchased",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			}
+		],
+		"name": "ConfigUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isGGG",
+				"type": "bool"
+			}
+		],
+		"name": "Fed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isGGG",
+				"type": "bool"
+			}
+		],
+		"name": "Harvested",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "blindBoxPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "blindBoxRates",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "calculateHarvestAmount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isGGG",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "feed",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fggToken",
+		"outputs": [
+			{
+				"internalType": "contract FGGToken",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getApproved",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gggToken",
+		"outputs": [
+			{
+				"internalType": "contract GGGToken",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "harvest",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "isApprovedForAll",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum FarmGame.NFTType",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"name": "nftConfigs",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "productionRate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "feedRequirement",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "imageURI",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "nftInfos",
+		"outputs": [
+			{
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastHarvestTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastFeedTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isOpened",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "openBlindBox",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "ownerOf",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "purchaseBlindBox",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "setApprovalForAll",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newPrice",
+				"type": "uint256"
+			}
+		],
+		"name": "setBlindBoxPrice",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum FarmGame.NFTType",
+				"name": "nftType",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "productionRate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "feedRequirement",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "imageURI",
+				"type": "string"
+			}
+		],
+		"name": "setNFTConfig",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes4",
+				"name": "interfaceId",
+				"type": "bytes4"
+			}
+		],
+		"name": "supportsInterface",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenURI",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawFGG",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawGGG",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+];
+  const gggTokenABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "initialOwner",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "allowance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientAllowance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSpender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "gameContract",
+				"type": "address"
+			}
+		],
+		"name": "setGameContract",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+];
+  const fggTokenABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "initialOwner",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "allowance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientAllowance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC20InsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "approver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "receiver",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidReceiver",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "ERC20InvalidSpender",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "gameContract",
+				"type": "address"
+			}
+		],
+		"name": "setGameContract",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+];
+
+  let provider;
+  let signer;
+  let nftContract;
+  let gggToken;
+  let fggToken;
+  let userAddress;
+
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        nftContract = new ethers.Contract(contractAddress, nftContractABI, signer);
+        gggToken = new ethers.Contract(gggTokenAddress, gggTokenABI, signer);
+        fggToken = new ethers.Contract(fggTokenAddress, fggTokenABI, signer);
+        document.getElementById('wallet-connect').innerText = '钱包已连接';
+        fetchUserNFTs();
+      } catch (error) {
+        alert('连接钱包失败: ' + error.message);
+      }
+    } else {
+      alert('请安装MetaMask或TP钱包');
+    }
+  };
+
+  document.getElementById('wallet-connect').addEventListener('click', connectWallet);
+
+  const fetchUserNFTs = async () => {
+    try {
+      const balance = await nftContract.balanceOf(userAddress);
+      if (balance.toNumber() > 0) {
+        for (let i = 0; i < balance.toNumber(); i++) {
+          const tokenId = await nftContract.tokenOfOwnerByIndex(userAddress, i);
+          const tokenURI = await nftContract.tokenURI(tokenId);
+          const tokenData = JSON.parse(atob(tokenURI.slice(29))); // 解码base64
+          displayNFT(tokenId, tokenData);
         }
-        
-        // 创建NFT卡片
-        function createNFTCard(tokenId, metadata, nftInfo) {
-            const nftCard = document.createElement('div');
-            nftCard.className = 'nft-card';
-            
-            const isOpened = nftInfo.isOpened;
-            const displayImage = isOpened ? 
-                (metadata.image || 'https://via.placeholder.com/200?text=NFT+Image') : 
-                'https://raw.githubusercontent.com/lsg666888/token-logo/refs/heads/main/manghe.png';
-            
-            const displayName = isOpened ? 
-                (metadata.name || `NFT #${tokenId}`) : 
-                '未开启盲盒';
-            
-            const typeInfo = nftTypes[nftInfo.nftType] || { name: '未知类型', color: '#666' };
-            
-            nftCard.innerHTML = `
-                <img src="${displayImage}" class="nft-card-image" 
-                     onerror="this.src='https://via.placeholder.com/200?text=Image+Error'">
-                <div class="nft-card-info">
-                    <div class="nft-card-name">${displayName}</div>
-                    <div class="nft-card-type" style="background-color: ${typeInfo.color}20; color: ${typeInfo.color}">
-                        ${isOpened ? typeInfo.name : '神秘盲盒'}
-                    </div>
-                    <div class="nft-id">ID: ${tokenId}</div>
-                </div>
-            `;
-            
-            return nftCard;
-        }
-        
-        // 加载单个NFT
-        async function loadSingleNFT(index) {
-            try {
-                const tokenId = await farmGameContract.methods.tokenOfOwnerByIndex(accounts[0], index).call();
-                console.log(`加载NFT ${index}: ${tokenId}`);
-                
-                const [tokenURI, nftInfo] = await Promise.all([
-                    farmGameContract.methods.tokenURI(tokenId).call(),
-                    farmGameContract.methods.nftInfos(tokenId).call()
-                ]);
-                
-                console.log(`NFT ${tokenId} 数据:`, { tokenURI, nftInfo });
-                
-                let metadata;
-                try {
-                    const jsonPart = tokenURI.startsWith('data:application/json;base64,') ? 
-                        tokenURI.split(',')[1] : 
-                        tokenURI;
-                    metadata = JSON.parse(atob(jsonPart));
-                } catch (e) {
-                    console.error('解析metadata失败:', e);
-                    metadata = { 
-                        image: 'https://via.placeholder.com/200?text=Invalid+Metadata',
-                        name: `NFT #${tokenId}`
-                    };
-                }
-                
-                const nftCard = createNFTCard(tokenId, metadata, nftInfo);
-                document.getElementById('nft-grid').appendChild(nftCard);
-                
-                ownedNFTs.push({
-                    tokenId,
-                    type: nftInfo.nftType,
-                    isOpened: nftInfo.isOpened,
-                    image: metadata.image,
-                    name: metadata.name
-                });
-                
-            } catch (error) {
-                console.error(`加载第 ${index} 个NFT失败:`, error);
-            }
-        }
-        
-        // 加载用户拥有的NFT
-        async function loadOwnedNFTs() {
-            const nftGrid = document.getElementById('nft-grid');
-            try {
-                nftGrid.innerHTML = '<div class="loading">加载中...</div>';
-                
-                // 添加延迟防止UI阻塞
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-                const balance = await farmGameContract.methods.balanceOf(accounts[0]).call();
-                console.log('NFT余额:', balance);
-                
-                if (balance == 0) {
-                    nftGrid.innerHTML = '<div class="empty">您还没有任何NFT</div>';
-                    return;
-                }
-                
-                nftGrid.innerHTML = '';
-                ownedNFTs = [];
-                
-                // 分批加载防止超时
-                const batchSize = 3;
-                for (let i = 0; i < balance; i += batchSize) {
-                    const end = Math.min(i + batchSize, balance);
-                    const batch = [];
-                    
-                    for (let j = i; j < end; j++) {
-                        batch.push(loadSingleNFT(j));
-                    }
-                    
-                    await Promise.all(batch);
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                }
-                
-            } catch (error) {
-                console.error('加载NFT失败:', error);
-                nftGrid.innerHTML = `
-                    <div class="error">
-                        加载失败: ${error.message || '未知错误'}<br>
-                        <button class="refresh-btn" onclick="loadOwnedNFTs()">刷新重试</button>
-                    </div>
-                `;
-            }
-        }
-        
-        // 加载用户数据
-        async function loadUserData() {
-            if (!accounts.length) return;
-            
-            try {
-                // 获取代币余额
-                const [gggBalance, fggBalance] = await Promise.all([
-                    gggTokenContract.methods.balanceOf(accounts[0]).call(),
-                    fggTokenContract.methods.balanceOf(accounts[0]).call()
-                ]);
-                
-                document.getElementById('ggg-balance').textContent = web3.utils.fromWei(gggBalance, 'ether');
-                document.getElementById('fgg-balance').textContent = web3.utils.fromWei(fggBalance, 'ether');
-                
-                // 获取用户NFT
-                await loadOwnedNFTs();
-                
-            } catch (error) {
-                console.error("加载用户数据失败:", error);
-                showStatus('error', '加载数据失败');
-            }
-        }
-        
-        // 重置UI状态
-        function resetUI() {
-            document.getElementById('ggg-balance').textContent = '0';
-            document.getElementById('fgg-balance').textContent = '0';
-            document.getElementById('nft-grid').innerHTML = '<div class="loading">加载中...</div>';
-        }
-        
-        // 初始化应用
-        async function initApp() {
-            showStatus('connecting');
-            
-            if (window.ethereum) {
-                web3 = new Web3(window.ethereum);
-                try {
-                    // 请求账户访问
-                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    console.log('连接账户:', accounts[0]);
-                    
-                    // 初始化合约
-                    farmGameContract = new web3.eth.Contract(farmGameABI, farmGameAddress);
-                    gggTokenContract = new web3.eth.Contract(gggTokenABI, gggTokenAddress);
-                    fggTokenContract = new web3.eth.Contract(fggTokenABI, fggTokenAddress);
-                    
-                    // 测试合约调用
-                    await farmGameContract.methods.balanceOf(accounts[0]).call();
-                    
-                    await loadUserData();
-                    showStatus('connected');
-                    
-                    // 监听账户变化
-                    window.ethereum.on('accountsChanged', (newAccounts) => {
-                        accounts = newAccounts;
-                        if (accounts.length > 0) {
-                            showStatus('connected');
-                            loadUserData();
-                        } else {
-                            showStatus('error', '钱包已断开连接');
-                            resetUI();
-                        }
-                    });
-                    
-                    // 监听链变化
-                    window.ethereum.on('chainChanged', () => {
-                        window.location.reload();
-                    });
-                    
-                    // 监听NFT转移事件
-                    farmGameContract.events.Transfer({ 
-                        filter: { to: accounts[0] },
-                        fromBlock: 'latest'
-                    }).on('data', () => {
-                        console.log('检测到新NFT，刷新列表...');
-                        loadOwnedNFTs();
-                    });
-                    
-                } catch (error) {
-                    console.error("初始化错误:", error);
-                    showStatus('error', error.message || '初始化失败');
-                    resetUI();
-                }
-            } else {
-                showStatus('error', '请安装MetaMask或其他Web3钱包');
-                resetUI();
-            }
-        }
-        
-        // 页面加载完成后初始化
-        window.addEventListener('load', initApp);
-    </script>
+      } else {
+        alert('您没有NFT');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('获取NFT失败');
+    }
+  };
+
+  const displayNFT = (tokenId, tokenData) => {
+    const nftContainer = document.getElementById('nft-container');
+    const nftCard = document.createElement('div');
+    nftCard.className = 'nft-card';
+    nftCard.innerHTML = `
+      <img src="${tokenData.image}" alt="NFT">
+      <h3>${tokenData.name}</h3>
+      <p>${tokenData.description}</p>
+      <button onclick="openBlindBox(${tokenId})">开启盲盒</button>
+    `;
+    nftContainer.appendChild(nftCard);
+  };
+
+  const openBlindBox = async (tokenId) => {
+    try {
+      await nftContract.openBlindBox(tokenId);
+      alert('盲盒已开启');
+      fetchUserNFTs(); // 重新加载用户NFT
+    } catch (error) {
+      alert('开启盲盒失败: ' + error.message);
+    }
+  };
+</script>
 </body>
 </html>
